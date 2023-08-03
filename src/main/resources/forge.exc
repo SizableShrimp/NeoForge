@@ -87,6 +87,8 @@ net/minecraft/server/level/Ticket.<init>(Lnet/minecraft/server/level/TicketType;
 net/minecraft/server/network/ServerStatusPacketListenerImpl.<init>(Lnet/minecraft/network/protocol/status/ServerStatus;Lnet/minecraft/network/Connection;Ljava/lang/String;)V=|p_272864_,p_273586_,statusCache
 net/minecraft/server/packs/metadata/pack/PackMetadataSection.<init>(Lnet/minecraft/network/chat/Component;ILjava/util/Map;)V=|p_10371_,p_10372_,packTypeVersions
 net/minecraft/server/packs/repository/Pack$Info.<init>(Lnet/minecraft/network/chat/Component;IILnet/minecraft/world/flag/FeatureFlagSet;Z)V=|f_244592_,dataFormat,resourceFormat,f_244041_,hidden
+net/minecraft/tags/TagFile.<init>(Ljava/util/List;ZLjava/util/List;)V=|f_215959_,f_215960_,remove
+net/minecraft/tags/TagLoader$EntryWithSource.<init>(Lnet/minecraft/tags/TagEntry;Ljava/lang/String;Z)V=|f_216042_,f_216043_,remove
 net/minecraft/world/entity/Entity.changeDimension(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraftforge/common/util/ITeleporter;)Lnet/minecraft/world/entity/Entity;=|p_20118_,teleporter
 net/minecraft/world/entity/Entity.playCombinationStepSounds(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)V=|p_277472_,p_277630_,primaryPos,secondaryPos
 net/minecraft/world/entity/Entity.playMuffledStepSound(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V=|p_283110_,pos
