@@ -7,13 +7,12 @@ package net.minecraftforge.registries;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.Event;
 import org.apache.commons.lang3.Validate;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Fired on the {@link net.minecraftforge.common.MinecraftForge#EVENT_BUS forge bus}.
@@ -21,12 +20,13 @@ import java.util.Locale;
 public class MissingMappingsEvent extends Event
 {
     private final ResourceKey<? extends Registry<?>> key;
-    private final IForgeRegistry<?> registry;
+    private final Registry<?> registry;
     private final List<Mapping<?>> mappings;
 
-    public MissingMappingsEvent(ResourceKey<? extends Registry<?>> key, IForgeRegistry<?> registry, Collection<Mapping<?>> missed)
+    @ApiStatus.Internal
+    public <T> MissingMappingsEvent(Registry<T> registry, Collection<Mapping<T>> missed)
     {
-        this.key = key;
+        this.key = registry.key();
         this.registry = registry;
         this.mappings = List.copyOf(missed);
     }
@@ -36,7 +36,7 @@ public class MissingMappingsEvent extends Event
         return this.key;
     }
 
-    public IForgeRegistry<?> getRegistry()
+    public Registry<?> getRegistry()
     {
         return this.registry;
     }
@@ -49,7 +49,7 @@ public class MissingMappingsEvent extends Event
     public <T> List<Mapping<T>> getMappings(ResourceKey<? extends Registry<T>> registryKey, String namespace)
     {
         return registryKey == this.key
-                ? (List<Mapping<T>>) (List<?>) this.mappings.stream().filter(e -> e.key.getNamespace().equals(namespace)).toList()
+                ? (List<Mapping<T>>) (List<?>) this.mappings.stream().filter(e -> e.key.location().getNamespace().equals(namespace)).toList()
                 : List.of();
     }
 
@@ -97,19 +97,14 @@ public class MissingMappingsEvent extends Event
 
     public static class Mapping<T> implements Comparable<Mapping<T>>
     {
-        private final IForgeRegistry<T> registry;
-        private final IForgeRegistry<T> pool;
-        final ResourceLocation key;
-        final int id;
+        final ResourceKey<T> key;
         Action action = Action.DEFAULT;
         T target;
 
-        public Mapping(IForgeRegistry<T> registry, IForgeRegistry<T> pool, ResourceLocation key, int id)
+        @ApiStatus.Internal
+        public Mapping(ResourceKey<T> key)
         {
-            this.registry = registry;
-            this.pool = pool;
             this.key = key;
-            this.id = id;
         }
 
         /**
@@ -147,34 +142,19 @@ public class MissingMappingsEvent extends Event
         public void remap(T target)
         {
             Validate.notNull(target, "Remap target can not be null");
-            Validate.isTrue(pool.getKey(target) != null,
-                    String.format(Locale.ENGLISH, "The specified entry %s hasn't been registered in registry yet.", target));
             action = Action.REMAP;
             this.target = target;
         }
 
-        public IForgeRegistry<T> getRegistry()
-        {
-            return this.registry;
-        }
-
-        public ResourceLocation getKey()
+        public ResourceKey<T> getKey()
         {
             return key;
-        }
-
-        public int getId()
-        {
-            return this.id;
         }
 
         @Override
         public int compareTo(Mapping<T> o)
         {
-            int ret = this.registry.getRegistryName().compareNamespaced(o.registry.getRegistryName());
-            if (ret == 0)
-                ret = this.key.compareNamespaced(o.key);
-            return ret;
+            return this.key.compareTo(o.key);
         }
     }
 }

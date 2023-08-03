@@ -51,16 +51,12 @@
     }
  
     protected abstract void m_6577_(HolderLookup.Provider p_256380_);
-@@ -64,7 +_,13 @@
+@@ -64,7 +_,9 @@
  
           return new CombinedData<>(p_274778_, p_274779_);
        }).thenCompose((p_274774_) -> {
 -         HolderLookup.RegistryLookup<T> registrylookup = p_274774_.f_273893_.m_255025_(this.f_254716_);
 +         HolderLookup.RegistryLookup<T> registrylookup = p_274774_.f_273893_.m_254861_(this.f_254716_).orElseThrow(() -> {
-+            // FORGE: Throw a more descriptive error message if this is a Forge registry without tags enabled
-+            if (net.minecraftforge.registries.RegistryManager.ACTIVE.getRegistry(this.f_254716_) != null) {
-+               return new IllegalStateException("Forge registry " + this.f_254716_.m_135782_() + " does not have support for tags");
-+            }
 +            return new IllegalStateException("Registry " + this.f_254716_.m_135782_() + " not found");
 +         });
           Predicate<ResourceLocation> predicate = (p_255496_) -> {

@@ -31,6 +31,8 @@ public class DataPackRegistryEvent extends Event implements IModBusEvent
      * <p>
      * Data JSONs will be loaded from {@code data/<datapack_namespace>/modid/registryname/}, where {@code modid} is the namespace of the registry key.
      * <p>
+     * For registering normal builtin registries that only load code entries, see {@link NewRegistryEvent}.
+     * <p>
      * This event is not {@linkplain Cancelable cancellable}, and does not {@linkplain HasResult have a result}.
      * <p>
      * This event is fired on the {@linkplain FMLJavaModLoadingContext#getModEventBus() mod-specific event bus},

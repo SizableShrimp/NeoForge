@@ -1,6 +1,15 @@
 --- a/net/minecraft/core/MappedRegistry.java
 +++ b/net/minecraft/core/MappedRegistry.java
-@@ -121,7 +_,16 @@
+@@ -32,7 +_,7 @@
+ import org.apache.commons.lang3.Validate;
+ import org.slf4j.Logger;
+ 
+-public class MappedRegistry<T> implements WritableRegistry<T> {
++public class MappedRegistry<T> extends net.minecraftforge.registries.NewForgeRegistry<T> implements WritableRegistry<T> {
+    private static final Logger f_211050_ = LogUtils.getLogger();
+    final ResourceKey<? extends Registry<T>> f_256817_;
+    private final ObjectList<Holder.Reference<T>> f_122672_ = new ObjectArrayList<>(256);
+@@ -121,10 +_,21 @@
        }
     }
  
@@ -17,6 +26,11 @@
        this.m_205921_(p_256594_);
        Validate.notNull(p_256594_);
        Validate.notNull(p_256374_);
++      if (p_256563_ > this.getMaxId())
++         throw new IllegalStateException(String.format(java.util.Locale.ENGLISH, "Invalid id %d - maximum id range of %d exceeded.", p_256563_, this.getMaxId()));
+       if (this.f_205841_.containsKey(p_256594_.m_135782_())) {
+          Util.m_137570_(new IllegalStateException("Adding duplicate key '" + p_256594_ + "' to registry"));
+       }
 @@ -145,6 +_,8 @@
           reference = this.f_205842_.computeIfAbsent(p_256594_, (p_258168_) -> {
              return Holder.Reference.m_254896_(this.m_255331_(), p_258168_);
@@ -26,14 +40,110 @@
        }
  
        this.f_205842_.put(p_256594_, reference);
-@@ -300,14 +_,17 @@
+@@ -160,9 +_,44 @@
+       this.f_122676_.put(p_256374_, p_256469_);
+       this.f_256989_ = this.f_256989_.add(p_256469_);
+       this.f_211051_ = null;
++      this.addCallbacks.forEach(addCallback -> addCallback.onAdd(this, p_256563_, p_256594_, p_256374_));
+       return reference;
+    }
+ 
++   @Override
++   protected void clear(boolean full) {
++      this.m_245419_();
++      this.clearCallbacks.forEach(clearCallback -> clearCallback.onClear(this, full));
++      super.clear(full);
++      this.f_122672_.clear();
++      this.f_122673_.clear();
++      if (this.f_211051_ != null)
++         this.f_211051_.clear();
++      if (full) {
++         this.f_205841_.clear();
++         this.f_205842_.clear();
++         this.f_205843_.clear();
++         this.f_122676_.clear();
++         this.f_205844_.clear();
++      }
++   }
++
++    @Override
++    protected void registerIdMapping(ResourceKey<T> key, int id) {
++       this.m_205921_(key);
++       if (id > this.getMaxId())
++          throw new IllegalStateException(String.format(java.util.Locale.ENGLISH, "Invalid id %d - maximum id range of %d exceeded.", id, this.getMaxId()));
++       if (this.m_7942_(id) != null)
++          throw new IllegalStateException("Duplicate id " + id + " for " + key + " and " + this.m_7981_(this.m_7942_(id)));
++       if (this.f_122678_ <= id) {
++          this.f_122678_ = id + 1;
++       }
++       var holder = this.f_205842_.get(key);
++       this.f_122672_.size(Math.max(this.f_122672_.size(), id + 1));
++       this.f_122672_.set(id, holder);
++       this.f_122673_.put(holder.m_203334_(), id);
++    }
++
+    public Holder.Reference<T> m_255290_(ResourceKey<T> p_256252_, T p_256591_, Lifecycle p_256255_) {
+       return this.m_203704_(this.f_122678_, p_256252_, p_256591_, p_256255_);
+    }
+@@ -183,7 +_,7 @@
+ 
+    @Nullable
+    public T m_6246_(@Nullable ResourceKey<T> p_122714_) {
+-      return m_205865_(this.f_205842_.get(p_122714_));
++      return m_205865_(this.f_205842_.get(this.resolve(p_122714_)));
+    }
+ 
+    @Nullable
+@@ -196,7 +_,7 @@
+    }
+ 
+    public Optional<Holder.Reference<T>> m_203636_(ResourceKey<T> p_205905_) {
+-      return Optional.ofNullable(this.f_205842_.get(p_205905_));
++      return Optional.ofNullable(this.f_205842_.get(this.resolve(p_205905_)));
+    }
+ 
+    public Holder<T> m_263177_(T p_263356_) {
+@@ -205,7 +_,7 @@
+    }
+ 
+    Holder.Reference<T> m_245420_(ResourceKey<T> p_248831_) {
+-      return this.f_205842_.computeIfAbsent(p_248831_, (p_258169_) -> {
++      return this.f_205842_.computeIfAbsent(this.resolve(p_248831_), (p_258169_) -> {
+          if (this.f_244282_ != null) {
+             throw new IllegalStateException("This registry can't create new holders without value");
+          } else {
+@@ -233,7 +_,7 @@
+ 
+    @Nullable
+    public T m_7745_(@Nullable ResourceLocation p_122739_) {
+-      Holder.Reference<T> reference = this.f_205841_.get(p_122739_);
++      Holder.Reference<T> reference = this.f_205841_.get(this.resolve(p_122739_));
+       return m_205865_(reference);
+    }
+ 
+@@ -300,14 +_,32 @@
        return this.f_205842_.containsKey(p_175392_);
     }
  
-+   /** @deprecated Forge: For internal use only. Use the Register events when registering values. */
-+   @Deprecated
-+   public void unfreeze() {
++   @Override
++   protected void unfreeze() {
 +      this.f_205845_ = false;
++   }
++
++   @org.jetbrains.annotations.Nullable
++   @Override
++   public T get(int id) {
++      return id >= 0 && id < this.f_122672_.size() ? this.f_122672_.get(id).m_203334_() : null;
++   }
++
++   @Override
++   public Optional<Holder.Reference<T>> getHolder(T value) {
++      return Optional.ofNullable(this.f_205843_.get(value));
++   }
++
++   @Override
++   public Holder.Reference<T> getHolderOrThrow(T value) {
++      return this.getHolder(value).orElseThrow(() -> new IllegalStateException("Missing value in " + this.m_123023_() + ": " + value));
 +   }
 +
     public Registry<T> m_203521_() {
@@ -47,7 +157,7 @@
           List<ResourceLocation> list = this.f_205842_.entrySet().stream().filter((p_211055_) -> {
              return !p_211055_.getValue().m_203633_();
           }).map((p_211794_) -> {
-@@ -321,7 +_,8 @@
+@@ -321,9 +_,11 @@
                    throw new IllegalStateException("Some intrusive holders were not registered: " + this.f_244282_.values());
                 }
  
@@ -56,4 +166,7 @@
 +               // this.unregisteredIntrusiveHolders = null;
              }
  
++            this.bakeCallbacks.forEach(bakeCallback -> bakeCallback.onBake(this));
              return this;
+          }
+       }

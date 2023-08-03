@@ -56,5 +56,5 @@
 +   public static ItemDisplayContext create(String keyName, net.minecraft.resources.ResourceLocation serializedName, @javax.annotation.Nullable ItemDisplayContext fallback) {
 +      throw new IllegalStateException("Enum not extended!");
 +   }
-+   public static final net.minecraftforge.registries.IForgeRegistry.AddCallback<ItemDisplayContext> ADD_CALLBACK = (owner, stage, id, key, obj, oldObj) -> obj.f_268735_ = id > Byte.MAX_VALUE ? (byte) -(id - Byte.MAX_VALUE) : (byte) id; // if the ID is > 127 start doing negative IDs
++   public static final net.minecraftforge.registries.callbacks.AddCallback<ItemDisplayContext> ADD_CALLBACK = (owner, id, key, obj) -> obj.f_268735_ = id > Byte.MAX_VALUE ? (byte) -(id - Byte.MAX_VALUE) : (byte) id; // if the ID is > 127 start doing negative IDs
  }

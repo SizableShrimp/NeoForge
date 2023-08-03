@@ -10,7 +10,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.tags.ITagManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,11 +71,6 @@ public interface IForgeRegistry<V> extends Iterable<V>
      */
     @NotNull Optional<Holder<V>> getHolder(V value);
 
-    /**
-     * @return an instance of {@link ITagManager} if this registry supports tags and/or has a wrapper registry, null otherwise
-     */
-    @Nullable ITagManager<V> tags();
-
     @NotNull Optional<Holder.Reference<V>> getDelegate(ResourceKey<V> rkey);
     @NotNull Holder.Reference<V> getDelegateOrThrow(ResourceKey<V> rkey);
     @NotNull Optional<Holder.Reference<V>> getDelegate(ResourceLocation key);
@@ -93,53 +87,6 @@ public interface IForgeRegistry<V> extends Iterable<V>
      * @return The slavemap if present
      */
     <T> T getSlaveMap(ResourceLocation slaveMapName, Class<T> type);
-
-    /**
-     * Callback fired when objects are added to the registry. This will fire when the registry is rebuilt
-     * on the client side from a server side synchronization, or when a world is loaded.
-     */
-    @FunctionalInterface
-    interface AddCallback<V>
-    {
-        void onAdd(IForgeRegistryInternal<V> owner, RegistryManager stage, int id, ResourceKey<V> key, V obj, @Nullable V oldObj);
-    }
-
-    /**
-     * Callback fired when the registry is cleared. This is done before a registry is reloaded from client
-     * or server.
-     */
-    @FunctionalInterface
-    interface ClearCallback<V>
-    {
-        void onClear(IForgeRegistryInternal<V> owner, RegistryManager stage);
-    }
-
-    /**
-     * Callback fired when a registry instance is created. Populate slave maps here.
-     */
-    @FunctionalInterface
-    interface CreateCallback<V>
-    {
-        void onCreate(IForgeRegistryInternal<V> owner, RegistryManager stage);
-    }
-
-    /**
-     * Callback fired when the registry contents are validated.
-     */
-    @FunctionalInterface
-    interface ValidateCallback<V>
-    {
-        void onValidate(IForgeRegistryInternal<V> owner, RegistryManager stage, int id, ResourceLocation key, V obj);
-    }
-
-    /**
-     * Callback fired when the registry is done processing. Used to calculate state ID maps.
-     */
-    @FunctionalInterface
-    interface BakeCallback<V>
-    {
-        void onBake(IForgeRegistryInternal<V> owner, RegistryManager stage);
-    }
 
     @FunctionalInterface
     interface MissingFactory<V>

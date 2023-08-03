@@ -5,145 +5,37 @@
 
 package net.minecraftforge.registries;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
-import com.mojang.serialization.Lifecycle;
-import net.minecraft.core.WritableRegistry;
+import com.google.common.collect.ImmutableMap;
+import com.mojang.logging.LogUtils;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.Registry;
 import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.network.HandshakeMessages;
-import net.minecraftforge.registries.ForgeRegistry.Snapshot;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.ApiStatus;
+import org.slf4j.Logger;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
-public class RegistryManager
-{
-    private static final Logger LOGGER = LogManager.getLogger();
-    public static final RegistryManager ACTIVE = new RegistryManager("ACTIVE");
-    public static final RegistryManager VANILLA = new RegistryManager("VANILLA");
-    public static final RegistryManager FROZEN = new RegistryManager("FROZEN");
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+@ApiStatus.Internal
+public class RegistryManager {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Marker REGISTRIES = MarkerFactory.getMarker("REGISTRIES");
     private static Set<ResourceLocation> vanillaRegistryKeys = Set.of();
+    private static Map<ResourceLocation, RegistrySnapshot> vanillaSnapshot = null;
+    private static Map<ResourceLocation, RegistrySnapshot> frozenSnapshot = null;
 
-    BiMap<ResourceLocation, ForgeRegistry<?>> registries = HashBiMap.create();
-    private Set<ResourceLocation> persisted = Sets.newHashSet();
-    private Set<ResourceLocation> synced = Sets.newHashSet();
-    private Map<ResourceLocation, ResourceLocation> legacyNames = new HashMap<>();
-    private final String name;
-
-    RegistryManager()
-    {
-        this("STAGING");
-    }
-
-    public RegistryManager(String name)
-    {
-        this.name = name;
-    }
-
-    public String getName()
-    {
-        return this.name;
-    }
-
-    boolean isStaging()
-    {
-        return "STAGING".equals(this.name);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <V> ForgeRegistry<V> getRegistry(ResourceLocation key)
-    {
-        return (ForgeRegistry<V>)this.registries.get(key);
-    }
-
-    public <V> ForgeRegistry<V> getRegistry(ResourceKey<? extends Registry<V>> key)
-    {
-        return getRegistry(key.location());
-    }
-
-    public <V> ResourceLocation getName(IForgeRegistry<V> reg)
-    {
-        return this.registries.inverse().get(reg);
-    }
-
-    public <V> ResourceLocation updateLegacyName(ResourceLocation legacyName)
-    {
-        ResourceLocation originalName = legacyName;
-        while (getRegistry(legacyName) == null)
-        {
-            legacyName = legacyNames.get(legacyName);
-            if (legacyName == null)
-            {
-                return originalName;
-            }
-        }
-        return legacyName;
-    }
-
-    public <V> ForgeRegistry<V> getRegistry(ResourceLocation key, RegistryManager other)
-    {
-        if (!this.registries.containsKey(key))
-        {
-            ForgeRegistry<V> ot = other.getRegistry(key);
-            if (ot == null)
-                return null;
-            this.registries.put(key, ot.copy(this));
-            if (other.persisted.contains(key))
-                this.persisted.add(key);
-            if (other.synced.contains(key))
-                this.synced.add(key);
-            other.legacyNames.entrySet().stream()
-                 .filter(e -> e.getValue().equals(key))
-                 .forEach(e -> addLegacyName(e.getKey(), e.getValue()));
-        }
-        return getRegistry(key);
-    }
-
-    <V> ForgeRegistry<V> createRegistry(ResourceLocation name, RegistryBuilder<V> builder)
-    {
-        if (registries.containsKey(name))
-            throw new IllegalArgumentException("Attempted to register a registry for " + name + " but it already exists");
-        ForgeRegistry<V> reg = new ForgeRegistry<V>(this, name, builder);
-        registries.put(name, reg);
-        if (builder.getSaveToDisc())
-            this.persisted.add(name);
-        if (builder.getSync())
-            this.synced.add(name);
-        for (ResourceLocation legacyName : builder.getLegacyNames())
-            addLegacyName(legacyName, name);
-        return getRegistry(name);
-    }
-
-    static <V> void registerToRootRegistry(ForgeRegistry<V> forgeReg)
-    {
-        injectForgeRegistry(forgeReg, BuiltInRegistries.REGISTRY);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <V> void injectForgeRegistry(ForgeRegistry<V> forgeReg, Registry<? extends Registry<?>> rootRegistry)
-    {
-        WritableRegistry<Registry<V>> registry = (WritableRegistry<Registry<V>>) rootRegistry;
-        Registry<V> wrapper = forgeReg.getWrapper();
-        if (wrapper != null)
-            registry.register(forgeReg.getRegistryKey(), wrapper, Lifecycle.experimental());
-    }
-
-    public static void postNewRegistryEvent()
-    {
+    public static void postNewRegistryEvent() {
         NewRegistryEvent event = new NewRegistryEvent();
         DataPackRegistryEvent.NewRegistry dataPackEvent = new DataPackRegistryEvent.NewRegistry();
         vanillaRegistryKeys = Set.copyOf(BuiltInRegistries.REGISTRY.keySet());
@@ -153,63 +45,169 @@ public class RegistryManager
 
         event.fill();
         dataPackEvent.process();
+
+        BuiltInRegistries.REGISTRY.forEach(reg -> ModLoader.get().postEventWrapContainerInModOrder(new ModifyRegistryEvent(reg.key(), reg)));
     }
 
-    private void addLegacyName(ResourceLocation legacyName, ResourceLocation name)
-    {
-        if (this.legacyNames.containsKey(legacyName))
-        {
-            throw new IllegalArgumentException("Legacy name conflict for registry " + name + ", upgrade path must be linear: " + legacyName);
+    static void takeVanillaSnapshot() {
+        vanillaSnapshot = takeSnapshot(SnapshotType.FULL);
+    }
+
+    static void takeFrozenSnapshot() {
+        frozenSnapshot = takeSnapshot(SnapshotType.FULL);
+    }
+
+    public static void revertToVanilla() {
+        applySnapshot(vanillaSnapshot, false);
+    }
+
+    public static void revertToFrozen() {
+        applySnapshot(frozenSnapshot, false);
+    }
+
+    /**
+     * Applies the snapshot to the current state of the {@link BuiltInRegistries}.
+     *
+     * @param snapshots the map of registry name to snapshot
+     * @param allowMissing if {@code true}, missing registries will be skipped but will log a warning.
+     * Otherwise, an exception will be thrown if a registry name in the snapshot map is missing.
+     */
+    public static void applySnapshot(Map<ResourceLocation, RegistrySnapshot> snapshots, boolean allowMissing) {
+        List<ResourceLocation> missingRegistries = allowMissing ? new ArrayList<>() : null;
+        Set<ResourceKey<?>> missingEntries = new HashSet<>();
+
+        snapshots.forEach((registryName, snapshot) -> {
+            if (!BuiltInRegistries.REGISTRY.containsKey(registryName)) {
+                if (!allowMissing)
+                    throw new IllegalStateException("Tried to applied snapshot with registry name " + registryName + " but was not found");
+
+                missingRegistries.add(registryName);
+                return;
+            }
+
+            MappedRegistry<?> registry = (MappedRegistry<?>) BuiltInRegistries.REGISTRY.get(registryName);
+            applySnapshot(registry, snapshot, missingEntries);
+        });
+
+        if (missingRegistries != null && !missingRegistries.isEmpty()) {
+            String header = "NeoForge detected missing/unknown registries.\n\n" +
+                            "There are " + missingRegistries.size() + " missing registries in this save.\n" +
+                            "These missing registries will be deleted from the save file on next save.\n" +
+                            "Missing Registries:\n";
+
+            StringBuilder builder = new StringBuilder();
+
+            for (ResourceLocation registryName : missingRegistries)
+                builder.append(registryName).append("\n");
+
+            LOGGER.warn(REGISTRIES, header);
+            LOGGER.warn(REGISTRIES, builder.toString());
         }
-        this.legacyNames.put(legacyName, name);
-    }
 
-    private void findSuperTypes(Class<?> type, Set<Class<?>> types)
-    {
-        if (type == null || type == Object.class)
-        {
-            return;
+        Map<ResourceLocation, Map<ResourceLocation, IdMappingEvent.IdRemapping>> remaps = ImmutableMap.of();
+
+        if (!missingEntries.isEmpty()) {
+            remaps = RegistryRemapHandler.handleRemaps(missingEntries);
         }
-        types.add(type);
-        for (Class<?> interfac : type.getInterfaces())
-        {
-            findSuperTypes(interfac, types);
+
+        GameData.fireRemapEvent(remaps, vanillaSnapshot == snapshots || frozenSnapshot == snapshots);
+        ObjectHolderRegistry.applyObjectHolders();
+    }
+
+    private static <T> void applySnapshot(MappedRegistry<T> registry, RegistrySnapshot snapshot, Set<ResourceKey<?>> missing) {
+        // Needed for package-private operations
+        // noinspection UnnecessaryLocalVariable
+        NewForgeRegistry<T> forgeRegistry = registry;
+        ResourceKey<? extends Registry<T>> registryKey = registry.key();
+        Registry<T> backup = snapshot.getFullBackup();
+
+        forgeRegistry.unfreeze();
+
+        if (backup == null) {
+            forgeRegistry.clear(false);
+            for (var entry : snapshot.getIds().object2IntEntrySet()) {
+                ResourceKey<T> key = ResourceKey.create(registryKey, entry.getKey());
+                if (!registry.containsKey(key))
+                    missing.add(key);
+                forgeRegistry.registerIdMapping(key, entry.getIntValue());
+            }
+        } else {
+            forgeRegistry.clear(true);
+            for (var entry : backup.entrySet()) {
+                ResourceKey<T> key = entry.getKey();
+                T value = entry.getValue();
+                registry.registerMapping(backup.getId(key), key, value, backup.lifecycle(value));
+            }
         }
-        findSuperTypes(type.getSuperclass(), types);
+
+        snapshot.getAliases().forEach(registry::addAlias);
+
+        forgeRegistry.freeze();
     }
 
-    public Map<ResourceLocation, Snapshot> takeSnapshot(boolean savingToDisc)
-    {
-        Map<ResourceLocation, Snapshot> ret = Maps.newHashMap();
-        Set<ResourceLocation> keys = savingToDisc ? this.persisted : this.synced;
-        keys.forEach(name -> ret.put(name, getRegistry(name).makeSnapshot()));
-        return ret;
+    /**
+     * Takes a snapshot of the current registries registered to {@link BuiltInRegistries#REGISTRY}.
+     *
+     * @param snapshotType If {@link SnapshotType#SAVE_TO_DISK}, only takes a snapshot of registries set to {@linkplain INewForgeRegistry#doesSerialize() serialize}.
+     * If {@link SnapshotType#SYNC_TO_CLIENT}, only takes a snapshot of registries set to {@linkplain INewForgeRegistry#doesSync() sync to the client}.
+     * If {@link SnapshotType#FULL}, takes a snapshot of all registries including entries.
+     * @return the snapshot map of registry name to snapshot data
+     */
+    public static Map<ResourceLocation, RegistrySnapshot> takeSnapshot(SnapshotType snapshotType) {
+        Map<ResourceLocation, RegistrySnapshot> map = new HashMap<>();
+        boolean full = snapshotType == SnapshotType.FULL;
+
+        for (Registry<?> registry : BuiltInRegistries.REGISTRY) {
+            if (snapshotType == SnapshotType.SAVE_TO_DISK) {
+                if (!registry.doesSerialize())
+                    continue;
+            } else if (snapshotType == SnapshotType.SYNC_TO_CLIENT) {
+                if (!registry.doesSync())
+                    continue;
+            }
+            map.put(registry.key().location(), new RegistrySnapshot(registry, full));
+        }
+
+        return map;
     }
 
-    //Public for testing only
-    public void clean()
-    {
-        this.persisted.clear();
-        this.synced.clear();
-        this.registries.clear();
+    public static List<Pair<String, HandshakeMessages.S2CRegistry>> generateRegistryPackets(boolean isLocal) {
+        if (isLocal)
+            return List.of();
+
+        return takeSnapshot(SnapshotType.SYNC_TO_CLIENT).entrySet().stream()
+                .map(e -> Pair.of("Registry " + e.getKey(), new HandshakeMessages.S2CRegistry(e.getKey(), e.getValue())))
+                .toList();
     }
 
-    public static List<Pair<String, HandshakeMessages.S2CRegistry>> generateRegistryPackets(boolean isLocal)
-    {
-        return !isLocal ? ACTIVE.takeSnapshot(false).entrySet().stream().
-                map(e->Pair.of("Registry " + e.getKey(), new HandshakeMessages.S2CRegistry(e.getKey(), e.getValue()))).
-                collect(Collectors.toList()) : Collections.emptyList();
+    public static List<ResourceLocation> getRegistryNamesForSyncToClient() {
+        List<ResourceLocation> list = new ArrayList<>();
+
+        BuiltInRegistries.REGISTRY.entrySet().forEach(e -> {
+            if (e.getValue().doesSync())
+                list.add(e.getKey().location());
+        });
+
+        return list;
     }
 
-    public static List<ResourceLocation> getRegistryNamesForSyncToClient()
-    {
-        return ACTIVE.registries.keySet().stream().
-                filter(resloc -> ACTIVE.synced.contains(resloc)).
-                collect(Collectors.toList());
-    }
-
-    public static Set<ResourceLocation> getVanillaRegistryKeys()
-    {
+    public static Set<ResourceLocation> getVanillaRegistryKeys() {
         return vanillaRegistryKeys;
+    }
+
+    public enum SnapshotType {
+        /**
+         * The snapshot can be saved to disk.
+         */
+        SAVE_TO_DISK,
+        /**
+         * The snapshot can be synced to clients.
+         */
+        SYNC_TO_CLIENT,
+        /**
+         * A full snapshot is being taken of all registries including entries,
+         * never sent to the client or saved to disk.
+         */
+        FULL
     }
 }
