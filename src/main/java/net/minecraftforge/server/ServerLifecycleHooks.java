@@ -40,6 +40,7 @@ import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.forgespi.locating.IModFile;
 import net.minecraftforge.registries.ForgeRegistries.Keys;
+import net.minecraftforge.registries.RegistryManager;
 import net.minecraftforge.resource.PathPackResources;
 import net.minecraftforge.server.permission.PermissionAPI;
 import org.apache.logging.log4j.LogManager;
@@ -129,7 +130,8 @@ public class ServerLifecycleHooks
 
     public static void handleServerStopped(final MinecraftServer server)
     {
-        if (!server.isDedicatedServer()) GameData.revertToFrozen();
+        if (!server.isDedicatedServer())
+            RegistryManager.revertToFrozen();
         MinecraftForge.EVENT_BUS.post(new ServerStoppedEvent(server));
         currentServer = null;
         LogicalSidedProvider.setServer(null);

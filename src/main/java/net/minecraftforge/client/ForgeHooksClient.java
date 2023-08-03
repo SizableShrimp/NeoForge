@@ -164,6 +164,7 @@ import net.minecraftforge.network.NetworkConstants;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.ServerStatusPing;
 import net.minecraftforge.registries.GameData;
+import net.minecraftforge.registries.RegistryManager;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -919,7 +920,7 @@ public class ForgeHooksClient
         // ONLY revert a non-local connection
         if (client != null && !client.isMemoryConnection())
         {
-            GameData.revertToFrozen();
+            RegistryManager.revertToFrozen();
         }
     }
 

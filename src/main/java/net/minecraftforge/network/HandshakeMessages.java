@@ -12,7 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModInfo;
 import net.minecraftforge.registries.DataPackRegistriesHooks;
-import net.minecraftforge.registries.ForgeRegistry;
 import net.minecraftforge.registries.RegistryManager;
 
 import java.util.ArrayList;
@@ -23,6 +22,7 @@ import java.util.Set;
 import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
+import net.minecraftforge.registries.RegistrySnapshot;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.Maps;
@@ -254,9 +254,9 @@ public class HandshakeMessages
     public static class S2CRegistry extends LoginIndexedMessage {
         private ResourceLocation registryName;
         @Nullable
-        private ForgeRegistry.Snapshot snapshot;
+        private RegistrySnapshot snapshot;
 
-        public S2CRegistry(final ResourceLocation name, @Nullable ForgeRegistry.Snapshot snapshot) {
+        public S2CRegistry(final ResourceLocation name, @Nullable RegistrySnapshot snapshot) {
             this.registryName = name;
             this.snapshot = snapshot;
         }
@@ -270,9 +270,9 @@ public class HandshakeMessages
 
         public static S2CRegistry decode(final FriendlyByteBuf buffer) {
             ResourceLocation name = buffer.readResourceLocation();
-            ForgeRegistry.Snapshot snapshot = null;
+            RegistrySnapshot snapshot = null;
             if (buffer.readBoolean())
-                snapshot = ForgeRegistry.Snapshot.read(buffer);
+                snapshot = RegistrySnapshot.read(buffer);
             return new S2CRegistry(name, snapshot);
         }
 
@@ -285,7 +285,7 @@ public class HandshakeMessages
         }
 
         @Nullable
-        public ForgeRegistry.Snapshot getSnapshot() {
+        public RegistrySnapshot getSnapshot() {
             return snapshot;
         }
     }

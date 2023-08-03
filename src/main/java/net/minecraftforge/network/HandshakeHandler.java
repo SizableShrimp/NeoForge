@@ -5,9 +5,9 @@
 
 package net.minecraftforge.network;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.mojang.authlib.GameProfile;
-
 import net.minecraft.core.Registry;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
@@ -23,17 +23,21 @@ import net.minecraftforge.event.entity.player.PlayerNegotiationEvent;
 import net.minecraftforge.network.ConnectionData.ModMismatchData;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.DataPackRegistriesHooks;
-import net.minecraftforge.registries.ForgeRegistry;
 import net.minecraftforge.registries.GameData;
+import net.minecraftforge.registries.RegistrySnapshot;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
-import com.google.common.collect.Maps;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -79,6 +83,7 @@ import java.util.stream.Collectors;
 public class HandshakeHandler
 {
     static final Marker FMLHSMARKER = MarkerManager.getMarker("FMLHANDSHAKE").setParents(NetworkConstants.NETWORK);
+    private static final Marker REGISTRIES = MarkerManager.getMarker("REGISTRIES");
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static final LoginWrapper loginWrapper = new LoginWrapper();
@@ -109,7 +114,7 @@ public class HandshakeHandler
     private final NetworkDirection direction;
     private final Connection manager;
     private int packetPosition;
-    private Map<ResourceLocation, ForgeRegistry.Snapshot> registrySnapshots;
+    private Map<ResourceLocation, RegistrySnapshot> registrySnapshots;
     private Set<ResourceLocation> registriesToReceive;
     private Map<ResourceLocation, String> registryHashes;
     private boolean negotiationStarted = false;
@@ -216,7 +221,7 @@ public class HandshakeHandler
 
         this.registriesToReceive = new HashSet<>(serverModList.getRegistries());
         this.registrySnapshots = Maps.newHashMap();
-        LOGGER.debug(ForgeRegistry.REGISTRIES, "Expecting {} registries: {}", ()->this.registriesToReceive.size(), ()->this.registriesToReceive);
+        LOGGER.debug(REGISTRIES, "Expecting {} registries: {}", () -> this.registriesToReceive.size(), () -> this.registriesToReceive);
     }
 
     void handleModData(HandshakeMessages.S2CModData serverModData, Supplier<NetworkEvent.Context> c)
@@ -289,7 +294,8 @@ public class HandshakeHandler
         CountDownLatch block = new CountDownLatch(1);
         contextSupplier.get().enqueueWork(() -> {
             LOGGER.debug(FMLHSMARKER, "Injecting registry snapshot from server.");
-            final Multimap<ResourceLocation, ResourceLocation> missingData = GameData.injectSnapshot(registrySnapshots, false, false);
+            // TODO reg: fix
+            final Multimap<ResourceLocation, ResourceLocation> missingData = null; // GameData.injectSnapshot(registrySnapshots, false, false);
             LOGGER.debug(FMLHSMARKER, "Snapshot injected.");
             if (!missingData.isEmpty()) {
                 LOGGER.error(FMLHSMARKER, "Missing registry data for impl connection:\n{}", LogMessageAdapter.adapt(sb->
