@@ -203,8 +203,8 @@ public class GlobalLootModifiersTest {
         public static final Supplier<Codec<WheatSeedsConverterModifier>> CODEC = Suppliers.memoize(() -> RecordCodecBuilder.create(inst -> codecStart(inst).and(
                 inst.group(
                         Codec.INT.fieldOf("numSeeds").forGetter(m -> m.numSeedsToConvert),
-                        ForgeRegistries.ITEMS.getCodec().fieldOf("seedItem").forGetter(m -> m.itemToCheck),
-                        ForgeRegistries.ITEMS.getCodec().fieldOf("replacement").forGetter(m -> m.itemReward)
+                        ForgeRegistries.ITEMS.byNameCodec().fieldOf("seedItem").forGetter(m -> m.itemToCheck),
+                        ForgeRegistries.ITEMS.byNameCodec().fieldOf("replacement").forGetter(m -> m.itemReward)
                 )).apply(inst, WheatSeedsConverterModifier::new)
         ));
 

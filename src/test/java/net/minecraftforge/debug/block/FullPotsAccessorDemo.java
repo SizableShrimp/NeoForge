@@ -229,7 +229,7 @@ public class FullPotsAccessorDemo
         public void load(CompoundTag tag)
         {
             super.load(tag);
-            plant = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(tag.getString("plant")));
+            plant = ForgeRegistries.BLOCKS.get(new ResourceLocation(tag.getString("plant")));
         }
 
         @Override
@@ -300,7 +300,7 @@ public class FullPotsAccessorDemo
 
             private List<BakedQuad> getPlantQuads(Block plant, @Nullable Direction face, RandomSource rand, @Nullable RenderType renderType)
             {
-                BlockState potState = ((FlowerPotBlock) Blocks.FLOWER_POT).getFullPotsView().getOrDefault(ForgeRegistries.BLOCKS.getKey(plant), ForgeRegistries.BLOCKS.getDelegateOrThrow(Blocks.AIR)).get().defaultBlockState();
+                BlockState potState = ((FlowerPotBlock) Blocks.FLOWER_POT).getFullPotsView().getOrDefault(ForgeRegistries.BLOCKS.getKey(plant), () -> Blocks.AIR).get().defaultBlockState();
                 BakedModel potModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(potState);
 
                 return potModel.getQuads(potState, face, rand, ModelData.EMPTY, renderType)

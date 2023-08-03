@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -28,42 +29,41 @@ import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ObjectHolder;
 import net.minecraftforge.registries.RegisterEvent;
+import net.minecraftforge.registries.RegistryObject;
 
 import java.util.Collections;
 
-@Mod("entity_renderer_events_test")
-@Mod.EventBusSubscriber(modid="entity_renderer_events_test", bus= Mod.EventBusSubscriber.Bus.MOD)
+@Mod(EntityRendererEventsTest.MODID)
+@Mod.EventBusSubscriber(modid = EntityRendererEventsTest.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EntityRendererEventsTest
 {
-    private static final ResourceLocation MY_ENTITY = new ResourceLocation("entity_renderer_events_test", "test_entity");
+    static final String MODID = "entity_renderer_events_test";
+    private static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, MODID);
 
-    @ObjectHolder(registryName = "entity_type", value = "entity_renderer_events_test:test_entity")
-    public static EntityType<MyEntity> MY_ENTITY_TYPE;
+    public static final RegistryObject<EntityType<MyEntity>> MY_ENTITY_TYPE = ENTITY_TYPES.register("test_entity",
+            () -> EntityType.Builder.of(MyEntity::new, MobCategory.MONSTER).build("test_entity"));
 
-    @SubscribeEvent
-    public static void entityRegistry(RegisterEvent event)
+    public EntityRendererEventsTest()
     {
-        if (event.getRegistryKey().equals(ForgeRegistries.Keys.ENTITY_TYPES))
-        {
-            event.register(ForgeRegistries.Keys.ENTITY_TYPES, MY_ENTITY, () -> EntityType.Builder.of(MyEntity::new, MobCategory.MONSTER).build("test_entity"));
-        }
+        ENTITY_TYPES.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
-    
+
     @SubscribeEvent
     public static void entityRegistry(EntityAttributeCreationEvent event)
     {
-        event.put(MY_ENTITY_TYPE, Monster.createMonsterAttributes().add(Attributes.MAX_HEALTH, 1.0D).build());
+        event.put(MY_ENTITY_TYPE.get(), Monster.createMonsterAttributes().add(Attributes.MAX_HEALTH, 1.0D).build());
     }
 
     @Mod.EventBusSubscriber(value= Dist.CLIENT, bus= Mod.EventBusSubscriber.Bus.MOD)
     private static class EntityRenderEventsTestClientModStuff
     {
-        private static final ModelLayerLocation MAIN_LAYER = new ModelLayerLocation(MY_ENTITY, "main");
-        private static final ModelLayerLocation OUTER_LAYER = new ModelLayerLocation(MY_ENTITY, "main");
-        private static final ModelLayerLocation ADDED_LAYER = new ModelLayerLocation(MY_ENTITY, "added");
+        private static final ModelLayerLocation MAIN_LAYER = new ModelLayerLocation(MY_ENTITY_TYPE.getId(), "main");
+        private static final ModelLayerLocation OUTER_LAYER = new ModelLayerLocation(MY_ENTITY_TYPE.getId(), "main");
+        private static final ModelLayerLocation ADDED_LAYER = new ModelLayerLocation(MY_ENTITY_TYPE.getId(), "added");
 
         @SubscribeEvent
         public static void layerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event)
@@ -76,13 +76,13 @@ public class EntityRendererEventsTest
         @SubscribeEvent
         public static void entityRenderers(EntityRenderersEvent.RegisterRenderers event)
         {
-            event.registerEntityRenderer(MY_ENTITY_TYPE, MyEntityRenderer::new);
+            event.registerEntityRenderer(MY_ENTITY_TYPE.get(), MyEntityRenderer::new);
         }
 
         @SubscribeEvent
         public static void entityLayers(EntityRenderersEvent.AddLayers event)
         {
-            MyEntityRenderer renderer = event.getRenderer(MY_ENTITY_TYPE);
+            MyEntityRenderer renderer = event.getRenderer(MY_ENTITY_TYPE.get());
             renderer.addLayer(new MyEntityLayer(renderer, new MyEntityModel(event.getEntityModels().bakeLayer(ADDED_LAYER)), 0.5f));
         }
 

@@ -5,6 +5,7 @@
 
 package net.minecraftforge.debug.block;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.FlowerBlock;
@@ -19,43 +20,39 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.common.PlantType;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ObjectHolder;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegisterEvent;
+import net.minecraftforge.registries.RegistryObject;
 
 @Mod(CustomPlantTypeTest.MODID)
 @Mod.EventBusSubscriber(bus = Bus.MOD)
 public class CustomPlantTypeTest
 {
     static final String MODID = "custom_plant_type_test";
-    private static final String CUSTOM_SOIL_BLOCK = "test_custom_block";
-    private static final String CUSTOM_PLANT_BLOCK = "test_custom_plant";
+    private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Registries.BLOCK, MODID);
 
-    @ObjectHolder(registryName = "block", value = CUSTOM_SOIL_BLOCK)
-    public static Block CUSTOM_SOIL;
-    @ObjectHolder(registryName = "block", value = CUSTOM_PLANT_BLOCK)
-    public static Block CUSTOM_PLANT;
+    public static final RegistryObject<Block> CUSTOM_SOIL = BLOCKS.register("test_custom_block", CustomBlock::new);
+    public static final RegistryObject<Block> CUSTOM_PLANT = BLOCKS.register("test_custom_plant", CustomPlantBlock::new);
 
-    @SubscribeEvent
-    public static void registerBlocks(RegisterEvent event)
+    public CustomPlantTypeTest()
     {
-        event.register(ForgeRegistries.Keys.BLOCKS, helper ->
-        {
-            helper.register(CUSTOM_SOIL_BLOCK, new CustomBlock());
-            helper.register(CUSTOM_PLANT_BLOCK, new CustomPlantBlock());
-        });
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+
+        BLOCKS.register(modEventBus);
     }
 
     @SubscribeEvent
     public static void registerItems(RegisterEvent event)
     {
-        event.register(ForgeRegistries.Keys.ITEMS, helper ->
+        event.register(Registries.ITEM, helper ->
         {
-            helper.register(CUSTOM_SOIL_BLOCK, new BlockItem(CUSTOM_SOIL, new Item.Properties()));
-            helper.register(CUSTOM_PLANT_BLOCK, new BlockItem(CUSTOM_PLANT, new Item.Properties()));
+            helper.register(CUSTOM_SOIL.getId().getPath(), new BlockItem(CUSTOM_SOIL.get(), new Item.Properties()));
+            helper.register(CUSTOM_PLANT.getId().getPath(), new BlockItem(CUSTOM_PLANT.get(), new Item.Properties()));
         });
     }
 
@@ -110,7 +107,7 @@ public class CustomPlantTypeTest
         public boolean mayPlaceOn(BlockState state, BlockGetter worldIn, BlockPos pos)
         {
             Block block = state.getBlock();
-            return block == CUSTOM_SOIL;
+            return block == CUSTOM_SOIL.get();
         }
     }
 }

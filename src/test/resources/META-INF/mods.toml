@@ -217,8 +217,8 @@ modId="audio_stream_test"
 modId="custom_mob_bucket_test"
 [[mods]]
 modId="custom_armor_model_test"
-[[mods]]
-modId="duplicate_optional_tag_test"
+#[[mods]]
+#modId="duplicate_optional_tag_test"
 [[mods]]
 modId="custom_particle_type_test"
 [[mods]]
@@ -227,8 +227,6 @@ modId="shield_block_event"
 modId="renderable_test"
 [[mods]]
 modId="ingredient_invalidation"
-[[mods]]
-modId="registry_codec_test"
 [[mods]]
 modId="registry_object_test"
 [[mods]]

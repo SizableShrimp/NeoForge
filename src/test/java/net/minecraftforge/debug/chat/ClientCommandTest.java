@@ -39,7 +39,7 @@ public class ClientCommandTest
                         // Used for checking suggestion providers that aren't registered
                         .then(Commands.literal("rawsuggest")
                                 .then(Commands.argument("block", ResourceLocationArgument.id())
-                                        .suggests((c, b) -> SharedSuggestionProvider.suggestResource(ForgeRegistries.BLOCKS.getKeys(), b))
+                                        .suggests((c, b) -> SharedSuggestionProvider.suggestResource(ForgeRegistries.BLOCKS.keySet(), b))
                                         .executes(this::testCommand)))
                         // Used for checking suggestion providers that are registered
                         .then(Commands.literal("registeredsuggest").then(

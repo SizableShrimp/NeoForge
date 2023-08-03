@@ -5,8 +5,8 @@
 
 package net.minecraftforge.debug.misc;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -26,20 +26,24 @@ import net.minecraft.network.chat.Component;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ObjectHolder;
-import net.minecraftforge.registries.RegisterEvent;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.RegistryObject;
 
-@Mod("containertypetest")
+@Mod(ContainerTypeTest.MODID)
 public class ContainerTypeTest
 {
-    @ObjectHolder(registryName = "menu", value = "containertypetest:container")
-    public static final MenuType<TestContainer> TYPE = null;
-    public class TestContainer extends AbstractContainerMenu
+    static final String MODID = "containertypetest";
+    private static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(Registries.MENU, MODID);
+
+    public static final RegistryObject<MenuType<TestContainer>> TYPE = MENU_TYPES.register("container",
+            () -> IForgeMenuType.create(TestContainer::new));
+
+    public static class TestContainer extends AbstractContainerMenu
     {
         private final String text;
 
@@ -50,7 +54,7 @@ public class ContainerTypeTest
 
         public TestContainer(int windowId, SimpleContainer inv, String text)
         {
-            super(TYPE, windowId);
+            super(TYPE.get(), windowId);
             this.text = text;
             for (int i = 0; i < 9; i++)
             {
@@ -87,19 +91,15 @@ public class ContainerTypeTest
 
     public ContainerTypeTest()
     {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::registerContainers);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        MENU_TYPES.register(modEventBus);
+        modEventBus.addListener(this::setup);
         MinecraftForge.EVENT_BUS.addListener(this::onRightClick);
-    }
-
-    private void registerContainers(final RegisterEvent event)
-    {
-        event.register(ForgeRegistries.Keys.MENU_TYPES, helper -> helper.register("container", IForgeMenuType.create(TestContainer::new)));
     }
 
     private void setup(FMLClientSetupEvent event)
     {
-        MenuScreens.register(TYPE, TestGui::new);
+        MenuScreens.register(TYPE.get(), TestGui::new);
     }
 
     private void onRightClick(PlayerInteractEvent.RightClickBlock event)
