@@ -14,6 +14,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -22,13 +23,12 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.crafting.conditions.ICondition;
-import net.minecraftforge.registries.ObjectHolder;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
 public class ConditionalRecipe
 {
-    @ObjectHolder(registryName = "recipe_serializer", value = "forge:conditional")
-    public static final RecipeSerializer<Recipe<?>> SERIALZIER = null;
+    public static final RegistryObject<RecipeSerializer<Recipe<?>>> SERIALIZER = RegistryObject.create(new ResourceLocation("forge", "conditional"), Registries.RECIPE_SERIALIZER);
 
     public static Builder builder()
     {
@@ -196,7 +196,7 @@ public class ConditionalRecipe
         @Override
         public RecipeSerializer<?> getType()
         {
-            return SERIALZIER;
+            return SERIALIZER.get();
         }
 
         @Override

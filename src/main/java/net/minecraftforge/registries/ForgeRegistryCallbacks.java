@@ -27,7 +27,7 @@ import java.util.Map;
 class ForgeRegistryCallbacks {
     static class BlockCallbacks implements ClearCallback<Block>, BakeCallback<Block> {
         static final BlockCallbacks INSTANCE = new BlockCallbacks();
-        static final ClearableObjectIntIdentityMap<BlockState> BLOCKSTATE_TO_ID_MAP = new ClearableObjectIntIdentityMap<BlockState>();
+        static final ClearableObjectIntIdentityMap<BlockState> BLOCKSTATE_TO_ID_MAP = new ClearableObjectIntIdentityMap<>();
 
         @Override
         public void onClear(Registry<Block> registry, boolean full) {

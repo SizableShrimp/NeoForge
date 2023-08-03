@@ -22,7 +22,7 @@
        } else {
           this.f_53509_ = p_53513_ * 20;
        }
-+      this.suspiciousStewEffectSupplier = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getDelegateOrThrow(p_53512_);
++      this.suspiciousStewEffectSupplier = () -> p_53512_;
  
     }
  

@@ -12,7 +12,6 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.RegistryCodecs;
 import net.minecraft.resources.RegistryFileCodec;
 import net.minecraft.resources.RegistryOps;
-import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraftforge.common.world.ModifiableStructureInfo.StructureInfo;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -37,7 +36,7 @@ public interface StructureModifier
      * Codec for (de)serializing structure modifiers inline.
      * Mods can use this for data generation.
      */
-    Codec<StructureModifier> DIRECT_CODEC = ExtraCodecs.lazyInitializedCodec(() -> ForgeRegistries.STRUCTURE_MODIFIER_SERIALIZERS.get().getCodec())
+    Codec<StructureModifier> DIRECT_CODEC = ForgeRegistries.STRUCTURE_MODIFIER_SERIALIZERS.byNameCodec()
             .dispatch(StructureModifier::codec, Function.identity());
 
     /**

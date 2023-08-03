@@ -178,7 +178,7 @@ public final class ForgeItemTagsProvider extends ItemTagsProvider
         {
             ResourceLocation key = new ResourceLocation("minecraft", pattern.replace("{color}",  color.getName()));
             TagKey<Item> tag = getForgeItemTag(prefix + color.getName());
-            Item item = ForgeRegistries.ITEMS.getValue(key);
+            Item item = ForgeRegistries.ITEMS.get(key);
             if (item == null || item  == Items.AIR)
                 throw new IllegalStateException("Unknown vanilla item: " + key.toString());
             tag(tag).add(item);

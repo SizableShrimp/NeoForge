@@ -15,8 +15,8 @@
  
 -   public static final Codec<ItemDisplayContext> f_268458_ = StringRepresentable.m_216439_(ItemDisplayContext::values);
 -   public static final IntFunction<ItemDisplayContext> f_268648_ = ByIdMap.m_262839_(ItemDisplayContext::m_269462_, values(), ByIdMap.OutOfBoundsStrategy.ZERO);
-+   public static final Codec<ItemDisplayContext> f_268458_ = net.minecraft.util.ExtraCodecs.m_184415_(() -> net.minecraftforge.registries.ForgeRegistries.DISPLAY_CONTEXTS.get().getCodec());
-+   public static final IntFunction<ItemDisplayContext> f_268648_ = id -> java.util.Objects.requireNonNullElse(((net.minecraftforge.registries.IForgeRegistryInternal<ItemDisplayContext>) net.minecraftforge.registries.ForgeRegistries.DISPLAY_CONTEXTS.get()).getValue(id < 0 ? Byte.MAX_VALUE + -id : id), NONE);
++   public static final Codec<ItemDisplayContext> f_268458_ = net.minecraftforge.registries.ForgeRegistries.DISPLAY_CONTEXTS.m_194605_();
++   public static final IntFunction<ItemDisplayContext> f_268648_ = id -> java.util.Objects.requireNonNullElse(net.minecraftforge.registries.ForgeRegistries.DISPLAY_CONTEXTS.get(id < 0 ? Byte.MAX_VALUE + -id : id), NONE);
     private byte f_268735_;
     private final String f_268747_;
  

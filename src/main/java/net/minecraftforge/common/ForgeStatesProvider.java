@@ -13,7 +13,6 @@ import net.minecraftforge.fml.ModLoadingPhase;
 import net.minecraftforge.fml.ModLoadingState;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.registries.GameData;
-import net.minecraftforge.registries.ObjectHolderRegistry;
 import net.minecraftforge.registries.RegistryManager;
 
 public class ForgeStatesProvider implements IModStateProvider

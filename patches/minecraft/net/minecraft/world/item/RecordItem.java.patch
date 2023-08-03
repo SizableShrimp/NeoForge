@@ -19,7 +19,7 @@
        this.f_43034_ = p_239615_;
        this.f_238749_ = p_239617_ * 20;
        f_43032_.put(this.f_43034_, this);
-+      this.soundSupplier = net.minecraftforge.registries.ForgeRegistries.SOUND_EVENTS.getDelegateOrThrow(this.f_43034_);
++      this.soundSupplier = () -> this.f_43034_;
 +   }
 +
 +   /**

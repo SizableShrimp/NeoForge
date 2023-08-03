@@ -28,7 +28,7 @@ import java.util.function.Function;
  * Individual instances of modifiers must be registered via json, see forge:loot_modifiers/global_loot_modifiers
  */
 public interface IGlobalLootModifier {
-    Codec<IGlobalLootModifier> DIRECT_CODEC = ExtraCodecs.lazyInitializedCodec(() -> ForgeRegistries.GLOBAL_LOOT_MODIFIER_SERIALIZERS.get().getCodec())
+    Codec<IGlobalLootModifier> DIRECT_CODEC = ForgeRegistries.GLOBAL_LOOT_MODIFIER_SERIALIZERS.byNameCodec()
             .dispatch(IGlobalLootModifier::codec, Function.identity());
 
     Codec<LootItemCondition[]> LOOT_CONDITIONS_CODEC = Codec.PASSTHROUGH.flatXmap(

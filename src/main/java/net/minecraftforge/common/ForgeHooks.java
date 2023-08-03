@@ -936,7 +936,7 @@ public class ForgeHooks
             return ForgeMod.WATER_TYPE.get();
         if (fluid == Fluids.LAVA || fluid == Fluids.FLOWING_LAVA)
             return ForgeMod.LAVA_TYPE.get();
-        if (ForgeMod.MILK.filter(milk -> milk == fluid).isPresent() || ForgeMod.FLOWING_MILK.filter(milk -> milk == fluid).isPresent())
+        if (ForgeMod.MILK.asOptional().filter(milk -> milk == fluid).isPresent() || ForgeMod.FLOWING_MILK.asOptional().filter(milk -> milk == fluid).isPresent())
             return ForgeMod.MILK_TYPE.get();
         throw new RuntimeException("Mod fluids must override getFluidType.");
     }
@@ -1099,10 +1099,7 @@ public class ForgeHooks
         EntityDataSerializer<?> serializer = vanilla.byId(id);
         if (serializer == null)
         {
-            // ForgeRegistries.DATA_SERIALIZERS is a deferred register now, so if this method is called too early, the registry will be null
-            ForgeRegistry<EntityDataSerializer<?>> registry = (ForgeRegistry<EntityDataSerializer<?>>) ForgeRegistries.ENTITY_DATA_SERIALIZERS.get();
-            if (registry != null)
-                serializer = registry.getValue(id);
+            serializer = ForgeRegistries.ENTITY_DATA_SERIALIZERS.get(id);
         }
         return serializer;
     }
@@ -1112,10 +1109,7 @@ public class ForgeHooks
         int id = vanilla.getId(serializer);
         if (id < 0)
         {
-            // ForgeRegistries.DATA_SERIALIZERS is a deferred register now, so if this method is called too early, the registry will be null
-            ForgeRegistry<EntityDataSerializer<?>> registry = (ForgeRegistry<EntityDataSerializer<?>>) ForgeRegistries.ENTITY_DATA_SERIALIZERS.get();
-            if (registry != null)
-                id = registry.getID(serializer);
+            id = ForgeRegistries.ENTITY_DATA_SERIALIZERS.getId(serializer);
         }
         return id;
     }
@@ -1128,7 +1122,7 @@ public class ForgeHooks
         return ForgeEventFactory.getMobGriefingEvent(level, entity) && state.canEntityDestroy(level, pos, entity) && ForgeEventFactory.onEntityDestroyBlock(entity, pos, state);
     }
 
-    private static final Map<Holder.Reference<Item>, Integer> VANILLA_BURNS = new HashMap<>();
+    private static final Map<Item, Integer> VANILLA_BURNS = new HashMap<>();
 
     /**
      * Gets the burn time of this itemstack.
@@ -1143,7 +1137,7 @@ public class ForgeHooks
         {
             Item item = stack.getItem();
             int ret = stack.getBurnTime(recipeType);
-            return ForgeEventFactory.getItemBurnTime(stack, ret == -1 ? VANILLA_BURNS.getOrDefault(ForgeRegistries.ITEMS.getDelegateOrThrow(item), 0) : ret, recipeType);
+            return ForgeEventFactory.getItemBurnTime(stack, ret == -1 ? VANILLA_BURNS.getOrDefault(item, 0) : ret, recipeType);
         }
     }
 
@@ -1151,7 +1145,7 @@ public class ForgeHooks
     public static synchronized void updateBurns()
     {
         VANILLA_BURNS.clear();
-        FurnaceBlockEntity.getFuel().entrySet().forEach(e -> VANILLA_BURNS.put(ForgeRegistries.ITEMS.getDelegateOrThrow(e.getKey()), e.getValue()));
+        FurnaceBlockEntity.getFuel().entrySet().forEach(e -> VANILLA_BURNS.put(e.getKey(), e.getValue()));
     }
 
     /**
@@ -1224,8 +1218,7 @@ public class ForgeHooks
         return Collections.unmodifiableMap(FORGE_ATTRIBUTES);
     }
 
-    /** FOR INTERNAL USE ONLY, DO NOT CALL DIRECTLY */
-    @Deprecated
+    @ApiStatus.Internal
     public static void modifyAttributes()
     {
         ModLoader.get().postEvent(new EntityAttributeCreationEvent(FORGE_ATTRIBUTES));
@@ -1436,7 +1429,7 @@ public class ForgeHooks
         }
         try
         {
-            return ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(registryName));
+            return ForgeRegistries.MOB_EFFECTS.get(new ResourceLocation(registryName));
         }
         catch (ResourceLocationException e)
         {

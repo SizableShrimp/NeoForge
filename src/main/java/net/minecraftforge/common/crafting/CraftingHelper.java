@@ -159,7 +159,7 @@ public class CraftingHelper
         if (!ForgeRegistries.ITEMS.containsKey(itemKey))
             throw new JsonSyntaxException("Unknown item '" + itemName + "'");
 
-        Item item = ForgeRegistries.ITEMS.getValue(itemKey);
+        Item item = ForgeRegistries.ITEMS.get(itemKey);
         if (disallowsAirInRecipe && item == Items.AIR)
             throw new JsonSyntaxException("Invalid item: " + itemName);
         return Objects.requireNonNull(item);

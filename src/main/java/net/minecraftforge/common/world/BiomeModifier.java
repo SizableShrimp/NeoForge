@@ -11,7 +11,6 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.RegistryCodecs;
 import net.minecraft.resources.RegistryFileCodec;
 import net.minecraft.resources.RegistryOps;
-import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.world.ModifiableBiomeInfo.BiomeInfo;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -37,7 +36,7 @@ public interface BiomeModifier
      * Codec for (de)serializing biome modifiers inline.
      * Mods can use this for data generation.
      */
-    Codec<BiomeModifier> DIRECT_CODEC = ExtraCodecs.lazyInitializedCodec(() -> ForgeRegistries.BIOME_MODIFIER_SERIALIZERS.get().getCodec())
+    Codec<BiomeModifier> DIRECT_CODEC = ForgeRegistries.BIOME_MODIFIER_SERIALIZERS.byNameCodec()
             .dispatch(BiomeModifier::codec, Function.identity());
 
     /**

@@ -68,7 +68,7 @@ public class FluidType
      * A lazy value which computes the number of fluid types within the
      * registry.
      */
-    public static final Lazy<Integer> SIZE = Lazy.of(() -> ForgeRegistries.FLUID_TYPES.get().getKeys().size());
+    public static final Lazy<Integer> SIZE = Lazy.of(ForgeRegistries.FLUID_TYPES::size);
 
     private String descriptionId;
     private final double motionScale;
@@ -144,7 +144,7 @@ public class FluidType
     public String getDescriptionId()
     {
         if (this.descriptionId == null)
-            this.descriptionId = Util.makeDescriptionId("fluid_type", ForgeRegistries.FLUID_TYPES.get().getKey(this));
+            this.descriptionId = Util.makeDescriptionId("fluid_type", ForgeRegistries.FLUID_TYPES.getKey(this));
         return this.descriptionId;
     }
 
@@ -853,7 +853,7 @@ public class FluidType
 
     @Override
     public String toString() {
-        @Nullable ResourceLocation name = ForgeRegistries.FLUID_TYPES.get().getKey(this);
+        @Nullable ResourceLocation name = ForgeRegistries.FLUID_TYPES.getKey(this);
         return name != null ? name.toString() : "Unregistered FluidType";
     }
 

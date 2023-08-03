@@ -179,7 +179,7 @@ public class DynamicFluidContainerModel implements IUnbakedGeometry<DynamicFluid
 
             ResourceLocation fluidName = new ResourceLocation(jsonObject.get("fluid").getAsString());
 
-            Fluid fluid = ForgeRegistries.FLUIDS.getValue(fluidName);
+            Fluid fluid = ForgeRegistries.FLUIDS.get(fluidName);
 
             boolean flip = GsonHelper.getAsBoolean(jsonObject, "flip_gas", false);
             boolean coverIsMask = GsonHelper.getAsBoolean(jsonObject, "cover_is_mask", true);

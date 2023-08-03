@@ -57,7 +57,7 @@
              crashreportcategory.m_128165_("Item Type", () -> {
                 return String.valueOf((Object)p_281675_.m_41720_());
              });
-+            crashreportcategory.m_128165_("Registry Name", () -> String.valueOf(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(p_281675_.m_41720_())));
++            crashreportcategory.m_128165_("Registry Name", () -> String.valueOf(net.minecraftforge.registries.ForgeRegistries.ITEMS.m_7981_(p_281675_.m_41720_())));
              crashreportcategory.m_128165_("Item Damage", () -> {
                 return String.valueOf(p_281675_.m_41773_());
              });

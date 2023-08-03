@@ -5,6 +5,7 @@
 
 package net.minecraftforge.common;
 
+import com.mojang.serialization.Lifecycle;
 import net.minecraft.DetectedVersion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BiomeColors;
@@ -13,10 +14,13 @@ import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.metadata.PackMetadataGenerator;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.metadata.pack.PackMetadataSection;
 import net.minecraft.sounds.SoundEvents;
@@ -128,18 +132,19 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Mod("forge")
+@Mod(ForgeMod.MODID)
 public class ForgeMod
 {
+    public static final String MODID = "forge";
     public static final String VERSION_CHECK_CAT = "version_checking";
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Marker FORGEMOD = MarkerManager.getMarker("FORGEMOD");
 
-    private static final DeferredRegister<Attribute> ATTRIBUTES = DeferredRegister.create(ForgeRegistries.Keys.ATTRIBUTES, "forge");
-    private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, "forge");
-    private static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIER_SERIALIZERS = DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, "forge");
-    private static final DeferredRegister<Codec<? extends StructureModifier>> STRUCTURE_MODIFIER_SERIALIZERS = DeferredRegister.create(ForgeRegistries.Keys.STRUCTURE_MODIFIER_SERIALIZERS, "forge");
-    private static final DeferredRegister<HolderSetType> HOLDER_SET_TYPES = DeferredRegister.create(ForgeRegistries.Keys.HOLDER_SET_TYPES, "forge");
+    private static final DeferredRegister<Attribute> ATTRIBUTES = DeferredRegister.create(Registries.ATTRIBUTE, MODID);
+    private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, MODID);
+    private static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIER_SERIALIZERS = DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, MODID);
+    private static final DeferredRegister<Codec<? extends StructureModifier>> STRUCTURE_MODIFIER_SERIALIZERS = DeferredRegister.create(ForgeRegistries.Keys.STRUCTURE_MODIFIER_SERIALIZERS, MODID);
+    private static final DeferredRegister<HolderSetType> HOLDER_SET_TYPES = DeferredRegister.create(ForgeRegistries.Keys.HOLDER_SET_TYPES, MODID);
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static final RegistryObject<EnumArgument.Info> ENUM_COMMAND_ARGUMENT_TYPE = COMMAND_ARGUMENT_TYPES.register("enum", () ->
@@ -225,7 +230,7 @@ public class ForgeMod
     public static final RegistryObject<Codec<RemoveSpawnsBiomeModifier>> REMOVE_SPAWNS_BIOME_MODIFIER_TYPE = BIOME_MODIFIER_SERIALIZERS.register("remove_spawns", () ->
         RecordCodecBuilder.create(builder -> builder.group(
                 Biome.LIST_CODEC.fieldOf("biomes").forGetter(RemoveSpawnsBiomeModifier::biomes),
-                RegistryCodecs.homogeneousList(ForgeRegistries.Keys.ENTITY_TYPES).fieldOf("entity_types").forGetter(RemoveSpawnsBiomeModifier::entityTypes)
+                RegistryCodecs.homogeneousList(Registries.ENTITY_TYPE).fieldOf("entity_types").forGetter(RemoveSpawnsBiomeModifier::entityTypes)
             ).apply(builder, RemoveSpawnsBiomeModifier::new))
         );
     /**
@@ -396,7 +401,7 @@ public class ForgeMod
     private static boolean enableMilkFluid = false;
     public static final RegistryObject<SoundEvent> BUCKET_EMPTY_MILK = RegistryObject.create(new ResourceLocation("item.bucket.empty_milk"), ForgeRegistries.SOUND_EVENTS);
     public static final RegistryObject<SoundEvent> BUCKET_FILL_MILK = RegistryObject.create(new ResourceLocation("item.bucket.fill_milk"), ForgeRegistries.SOUND_EVENTS);
-    public static final RegistryObject<FluidType> MILK_TYPE = RegistryObject.createOptional(new ResourceLocation("milk"), ForgeRegistries.Keys.FLUID_TYPES.location(), "minecraft");
+    public static final RegistryObject<FluidType> MILK_TYPE = RegistryObject.create(new ResourceLocation("milk"), ForgeRegistries.Keys.FLUID_TYPES);
     public static final RegistryObject<Fluid> MILK = RegistryObject.create(new ResourceLocation("milk"), ForgeRegistries.FLUIDS);
     public static final RegistryObject<Fluid> FLOWING_MILK = RegistryObject.create(new ResourceLocation("flowing_milk"), ForgeRegistries.FLUIDS);
 
@@ -456,7 +461,7 @@ public class ForgeMod
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ForgeConfig.serverSpec);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ForgeConfig.commonSpec);
         modEventBus.register(ForgeConfig.class);
-        ForgeDeferredRegistriesSetup.setup(modEventBus);
+        ForgeRegistriesSetup.setup(modEventBus);
         // Forge does not display problems when the remote is not matching.
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, ()->new IExtensionPoint.DisplayTest(()->"ANY", (remote, isServer)-> true));
         StartupMessageManager.addModMessage("NeoForge version "+ForgeVersion.getVersion());
@@ -466,11 +471,11 @@ public class ForgeMod
         MinecraftForge.EVENT_BUS.addListener(this::mappingChanged);
         MinecraftForge.EVENT_BUS.addListener(this::registerPermissionNodes);
 
-        ForgeRegistries.ITEMS.tags().addOptionalTagDefaults(Tags.Items.ENCHANTING_FUELS, Set.of(ForgeRegistries.ITEMS.getDelegateOrThrow(Items.LAPIS_LAZULI)));
+        // TODO: Reinstate this optional tag
+        // ForgeRegistries.ITEMS.tags().addOptionalTagDefaults(Tags.Items.ENCHANTING_FUELS, Set.of(ForgeRegistries.ITEMS.getDelegateOrThrow(Items.LAPIS_LAZULI)));
 
-        // TODO: Remove when addAlias becomes proper API, as this should be done in the DR's above.
-        addAlias(ForgeRegistries.ATTRIBUTES, new ResourceLocation("forge", "reach_distance"), new ResourceLocation("forge", "block_reach"));
-        addAlias(ForgeRegistries.ATTRIBUTES, new ResourceLocation("forge", "attack_range"), new ResourceLocation("forge", "entity_reach"));
+        ATTRIBUTES.addAlias(new ResourceLocation(MODID, "reach_distance"), new ResourceLocation(MODID, "block_reach"));
+        ATTRIBUTES.addAlias(new ResourceLocation(MODID, "attack_range"), new ResourceLocation(MODID, "entity_reach"));
     }
 
     public void preInit(FMLCommonSetupEvent evt)
@@ -522,20 +527,20 @@ public class ForgeMod
 
     public void missingSoundMapping(MissingMappingsEvent event)
     {
-        if (event.getKey() != ForgeRegistries.Keys.SOUND_EVENTS)
+        if (event.getKey() != Registries.SOUND_EVENT)
             return;
 
         //Removed in 1.15, see https://minecraft.gamepedia.com/Parrot#History
         List<String> removedSounds = Arrays.asList("entity.parrot.imitate.panda", "entity.parrot.imitate.zombie_pigman", "entity.parrot.imitate.enderman", "entity.parrot.imitate.polar_bear", "entity.parrot.imitate.wolf");
-        for (MissingMappingsEvent.Mapping<SoundEvent> mapping : event.getAllMappings(ForgeRegistries.Keys.SOUND_EVENTS))
+        for (MissingMappingsEvent.Mapping<SoundEvent> mapping : event.getAllMappings(Registries.SOUND_EVENT))
         {
-            ResourceLocation regName = mapping.getKey();
-            if (regName != null && regName.getNamespace().equals("minecraft"))
+            ResourceKey<SoundEvent> key = mapping.getKey();
+            if (key != null && key.location().getNamespace().equals("minecraft"))
             {
-                String path = regName.getPath();
+                String path = key.location().getPath();
                 if (removedSounds.stream().anyMatch(s -> s.equals(path)))
                 {
-                    LOGGER.info("Ignoring removed minecraft sound {}", regName);
+                    LOGGER.info("Ignoring removed minecraft sound {}", key);
                     mapping.ignore();
                 }
             }
@@ -548,7 +553,7 @@ public class ForgeMod
         if (enableMilkFluid)
         {
             // register milk fill, empty sounds (delegates to water fill, empty sounds)
-            event.register(ForgeRegistries.Keys.SOUND_EVENTS, helper -> {
+            event.register(Registries.SOUND_EVENT, helper -> {
                 helper.register(BUCKET_EMPTY_MILK.getId(), SoundEvent.createVariableRangeEvent(BUCKET_EMPTY_MILK.getId()));
                 helper.register(BUCKET_FILL_MILK.getId(), SoundEvent.createVariableRangeEvent(BUCKET_FILL_MILK.getId()));
             });
@@ -565,8 +570,8 @@ public class ForgeMod
                 {
                     consumer.accept(new IClientFluidTypeExtensions()
                     {
-                        private static final ResourceLocation MILK_STILL = new ResourceLocation("forge", "block/milk_still"),
-                                MILK_FLOW = new ResourceLocation("forge", "block/milk_flowing");
+                        private static final ResourceLocation MILK_STILL = new ResourceLocation(MODID, "block/milk_still"),
+                                MILK_FLOW = new ResourceLocation(MODID, "block/milk_flowing");
 
                         @Override
                         public ResourceLocation getStillTexture()
@@ -584,7 +589,7 @@ public class ForgeMod
             }));
 
             // register fluids
-            event.register(ForgeRegistries.Keys.FLUIDS, helper -> {
+            event.register(Registries.FLUID, helper -> {
                 // set up properties
                 ForgeFlowingFluid.Properties properties = new ForgeFlowingFluid.Properties(MILK_TYPE, MILK, FLOWING_MILK).bucket(() -> Items.MILK_BUCKET);
 
@@ -598,19 +603,18 @@ public class ForgeMod
     {
         if (event.getRegistryKey().equals(ForgeRegistries.Keys.DISPLAY_CONTEXTS))
         {
-            IForgeRegistryInternal<ItemDisplayContext> forgeRegistry = (IForgeRegistryInternal<ItemDisplayContext>) event.<ItemDisplayContext>getForgeRegistry();
-            if (forgeRegistry == null)
-                throw new IllegalStateException("Item display context was not a forge registry, wtf???");
-
+            MappedRegistry<ItemDisplayContext> registry = (MappedRegistry<ItemDisplayContext>) event.getRegistry(ForgeRegistries.Keys.DISPLAY_CONTEXTS);
             Arrays.stream(ItemDisplayContext.values())
                     .filter(Predicate.not(ItemDisplayContext::isModded))
-                    .forEach(ctx -> forgeRegistry.register(ctx.getId(), new ResourceLocation("minecraft", ctx.getSerializedName()), ctx));
+                    .forEach(ctx -> registry.registerMapping(ctx.getId(),
+                            ResourceKey.create(ForgeRegistries.Keys.DISPLAY_CONTEXTS, new ResourceLocation("minecraft", ctx.getSerializedName())),
+                            ctx, Lifecycle.stable()));
         }
     }
 
     public void registerRecipeSerializers(RegisterEvent event)
     {
-        if (event.getRegistryKey().equals(ForgeRegistries.Keys.RECIPE_SERIALIZERS))
+        if (event.getRegistryKey().equals(Registries.RECIPE_SERIALIZER))
         {
             CraftingHelper.register(AndCondition.Serializer.INSTANCE);
             CraftingHelper.register(FalseCondition.Serializer.INSTANCE);
@@ -621,14 +625,14 @@ public class ForgeMod
             CraftingHelper.register(TrueCondition.Serializer.INSTANCE);
             CraftingHelper.register(TagEmptyCondition.Serializer.INSTANCE);
 
-            CraftingHelper.register(new ResourceLocation("forge", "compound"), CompoundIngredient.Serializer.INSTANCE);
-            CraftingHelper.register(new ResourceLocation("forge", "nbt"), StrictNBTIngredient.Serializer.INSTANCE);
-            CraftingHelper.register(new ResourceLocation("forge", "partial_nbt"), PartialNBTIngredient.Serializer.INSTANCE);
-            CraftingHelper.register(new ResourceLocation("forge", "difference"), DifferenceIngredient.Serializer.INSTANCE);
-            CraftingHelper.register(new ResourceLocation("forge", "intersection"), IntersectionIngredient.Serializer.INSTANCE);
+            CraftingHelper.register(new ResourceLocation(MODID, "compound"), CompoundIngredient.Serializer.INSTANCE);
+            CraftingHelper.register(new ResourceLocation(MODID, "nbt"), StrictNBTIngredient.Serializer.INSTANCE);
+            CraftingHelper.register(new ResourceLocation(MODID, "partial_nbt"), PartialNBTIngredient.Serializer.INSTANCE);
+            CraftingHelper.register(new ResourceLocation(MODID, "difference"), DifferenceIngredient.Serializer.INSTANCE);
+            CraftingHelper.register(new ResourceLocation(MODID, "intersection"), IntersectionIngredient.Serializer.INSTANCE);
             CraftingHelper.register(new ResourceLocation("minecraft", "item"), VanillaIngredientSerializer.INSTANCE);
 
-            event.register(ForgeRegistries.Keys.RECIPE_SERIALIZERS, new ResourceLocation("forge", "conditional"), ConditionalRecipe.Serializer::new);
+            event.register(Registries.RECIPE_SERIALIZER, new ResourceLocation(MODID, "conditional"), ConditionalRecipe.Serializer::new);
         }
     }
 
@@ -641,21 +645,11 @@ public class ForgeMod
         event.register(Registries.LOOT_CONDITION_TYPE, new ResourceLocation("forge:can_tool_perform_action"), () -> CanToolPerformAction.LOOT_CONDITION_TYPE);
     }
 
-    public static final PermissionNode<Boolean> USE_SELECTORS_PERMISSION = new PermissionNode<>("forge", "use_entity_selectors",
+    public static final PermissionNode<Boolean> USE_SELECTORS_PERMISSION = new PermissionNode<>(MODID, "use_entity_selectors",
             PermissionTypes.BOOLEAN, (player, uuid, contexts) -> player != null && player.hasPermissions(Commands.LEVEL_GAMEMASTERS));
 
     public void registerPermissionNodes(PermissionGatherEvent.Nodes event)
     {
         event.addNodes(USE_SELECTORS_PERMISSION);
-    }
-
-    /**
-     * TODO: Remove when {@link ForgeRegistry#addAlias(ResourceLocation, ResourceLocation)} is elevated to {@link IForgeRegistry}.
-     */
-    @Deprecated(forRemoval = true, since = "1.20")
-    private static <T> void addAlias(IForgeRegistry<T> registry, ResourceLocation from, ResourceLocation to)
-    {
-        ForgeRegistry<T> fReg = (ForgeRegistry<T>) registry;
-        fReg.addAlias(from, to);
     }
 }

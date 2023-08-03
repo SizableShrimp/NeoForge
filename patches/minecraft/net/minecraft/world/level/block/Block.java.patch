@@ -109,15 +109,6 @@
     public SoundType m_49962_(BlockState p_49963_) {
        return this.f_60446_;
     }
-@@ -451,7 +_,7 @@
-          this.f_49788_ = Item.m_41439_(this);
-       }
- 
--      return this.f_49788_;
-+      return net.minecraftforge.registries.ForgeRegistries.ITEMS.getDelegateOrThrow(this.f_49788_).get(); // Forge: Vanilla caches the items, update with registry replacements.
-    }
- 
-    public boolean m_49967_() {
 @@ -472,6 +_,74 @@
     protected ImmutableMap<BlockState, VoxelShape> m_152458_(Function<BlockState, VoxelShape> p_152459_) {
        return this.f_49792_.m_61056_().stream().collect(ImmutableMap.toImmutableMap(Function.identity(), p_152459_));

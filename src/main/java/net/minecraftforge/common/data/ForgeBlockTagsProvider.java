@@ -114,7 +114,7 @@ public final class ForgeBlockTagsProvider extends BlockTagsProvider
         {
             ResourceLocation key = new ResourceLocation("minecraft", pattern.replace("{color}",  color.getName()));
             TagKey<Block> tag = getForgeTag(prefix + color.getName());
-            Block block = ForgeRegistries.BLOCKS.getValue(key);
+            Block block = ForgeRegistries.BLOCKS.get(key);
             if (block == null || block  == Blocks.AIR)
                 throw new IllegalStateException("Unknown vanilla block: " + key.toString());
             tag(tag).add(block);

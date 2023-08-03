@@ -54,7 +54,7 @@ public class FluidStack
     private boolean isEmpty;
     private int amount;
     private CompoundTag tag;
-    private Holder.Reference<Fluid> fluidDelegate;
+    private Fluid fluid;
 
     public FluidStack(Fluid fluid, int amount)
     {
@@ -68,7 +68,7 @@ public class FluidStack
             LOGGER.fatal("Failed attempt to create a FluidStack for an unregistered Fluid {} (type {})", ForgeRegistries.FLUIDS.getKey(fluid), fluid.getClass().getName());
             throw new IllegalArgumentException("Cannot create a fluidstack from an unregistered fluid");
         }
-        this.fluidDelegate = ForgeRegistries.FLUIDS.getDelegateOrThrow(fluid);
+        this.fluid = fluid;
         this.amount = amount;
 
         updateEmpty();
@@ -105,7 +105,7 @@ public class FluidStack
         }
 
         ResourceLocation fluidName = new ResourceLocation(nbt.getString("FluidName"));
-        Fluid fluid = ForgeRegistries.FLUIDS.getValue(fluidName);
+        Fluid fluid = ForgeRegistries.FLUIDS.get(fluidName);
         if (fluid == null)
         {
             return EMPTY;
@@ -149,12 +149,12 @@ public class FluidStack
 
     public final Fluid getFluid()
     {
-        return isEmpty ? Fluids.EMPTY : fluidDelegate.get();
+        return isEmpty ? Fluids.EMPTY : this.fluid;
     }
 
     public final Fluid getRawFluid()
     {
-        return fluidDelegate.get();
+        return this.fluid;
     }
 
     public boolean isEmpty() {
