@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.Multimap;
 
+import net.minecraft.core.Registry;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.food.FoodProperties;
@@ -42,7 +43,6 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ToolAction;
 import net.minecraftforge.common.ToolActions;
 import net.minecraftforge.items.wrapper.ShulkerItemStackInvWrapper;
-import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -633,7 +633,7 @@ public interface IForgeItem
      *
      * @param itemStack the ItemStack to check
      * @return the Mod ID for the ItemStack, or null when there is no specially
-     *         associated mod and {@link IForgeRegistry#getKey(Object)} would return null.
+     *         associated mod and {@link Registry#getKey(Object)} would return null.
      */
     @Nullable
     default String getCreatorModId(ItemStack itemStack)
