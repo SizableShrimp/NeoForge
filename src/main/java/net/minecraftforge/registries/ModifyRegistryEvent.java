@@ -43,4 +43,14 @@ public class ModifyRegistryEvent extends Event implements IModBusEvent {
     public Registry<?> getRegistry() {
         return this.registry;
     }
+
+    /**
+     * @param key the registry key to compare again {@link #getRegistryKey()}
+     * @return The registry typed to the given registry key if it matches {@link #getRegistryKey()},
+     * or {@code null} if it does not match.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> Registry<T> getRegistry(ResourceKey<? extends Registry<T>> key) {
+        return key == this.registryKey ? (Registry<T>) this.registry : null;
+    }
 }

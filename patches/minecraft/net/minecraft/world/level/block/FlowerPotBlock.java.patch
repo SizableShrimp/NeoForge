@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/FlowerPotBlock.java
 +++ b/net/minecraft/world/level/block/FlowerPotBlock.java
-@@ -28,10 +_,29 @@
+@@ -28,10 +_,31 @@
     protected static final VoxelShape f_53523_ = Block.m_49796_(5.0D, 0.0D, 5.0D, 11.0D, 6.0D, 11.0D);
     private final Block f_53525_;
  
@@ -9,8 +9,10 @@
 -      super(p_53529_);
 -      this.f_53525_ = p_53528_;
 -      f_53524_.put(p_53528_, this);
-+      this(() -> (FlowerPotBlock) Blocks.f_50276_, () -> p_53528_, p_53529_);
-+      ((FlowerPotBlock)Blocks.f_50276_).addPlant(net.minecraftforge.registries.ForgeRegistries.BLOCKS.m_7981_(p_53528_), () -> this);
++      // Blocks.FLOWER_POT is null here when we are making the vanilla empty flower pot itself
++      this(Blocks.f_50276_ == null ? null : () -> (FlowerPotBlock) Blocks.f_50276_, () -> p_53528_, p_53529_);
++      if (Blocks.f_50276_ != null)
++         ((FlowerPotBlock)Blocks.f_50276_).addPlant(net.minecraftforge.registries.ForgeRegistries.BLOCKS.m_7981_(p_53528_), () -> this);
 +   }
 +
 +   /**

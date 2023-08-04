@@ -8,6 +8,7 @@ package net.minecraftforge.registries;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraftforge.eventbus.api.IEventBus;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -73,22 +74,25 @@ public class ForgeRegistriesSetup {
         if (!(event.getRegistry() instanceof NewForgeRegistry<?> forgeRegistry))
             return;
 
-        if (VANILLA_SERIALIZE_KEYS.contains(event.getRegistryKey()))
+        ResourceKey<? extends Registry<?>> registryKey = event.getRegistryKey();
+
+        if (VANILLA_SERIALIZE_KEYS.contains(registryKey))
             forgeRegistry.setSerialize(true);
 
-        if (VANILLA_SYNC_KEYS.contains(event.getRegistryKey()))
+        if (VANILLA_SYNC_KEYS.contains(registryKey))
             forgeRegistry.setSync(true);
 
-        if (event.getRegistryKey() == Registries.BLOCK)
+        if (registryKey == Registries.BLOCK) {
             ((NewForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.BlockCallbacks.INSTANCE);
-
-        if (event.getRegistryKey() == Registries.ITEM)
+        } else if (registryKey == Registries.ITEM) {
             ((NewForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.ItemCallbacks.INSTANCE);
-
-        if (event.getRegistryKey() == Registries.ATTRIBUTE)
+        } else if (registryKey == Registries.ATTRIBUTE) {
             ((NewForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.AttributeCallbacks.INSTANCE);
-
-        if (event.getRegistryKey() == Registries.POINT_OF_INTEREST_TYPE)
+        } else if (registryKey == Registries.POINT_OF_INTEREST_TYPE) {
             ((NewForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.PoiTypeCallbacks.INSTANCE);
+        } else if (registryKey == ForgeRegistries.Keys.DISPLAY_CONTEXTS) {
+            // We add this callback here to not cause a tricky classloading loop with ForgeRegistries#DISPLAY_CONTEXTS and ItemDisplayContext#CODEC
+            ((NewForgeRegistry) forgeRegistry).addCallback(ItemDisplayContext.ADD_CALLBACK);
+        }
     }
 }

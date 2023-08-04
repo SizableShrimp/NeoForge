@@ -23,16 +23,6 @@ function initializeCoreMod() {
                 return classNode;
             }
         },
-        'potion': {
-            'target': {
-                'type': 'CLASS',
-                'name': 'net.minecraft.world.effect.MobEffectInstance'
-            },
-            'transformer': function(classNode) {
-                ASMAPI.redirectFieldToMethod(classNode, ASMAPI.mapField('f_19502_'), ASMAPI.mapMethod('m_19544_')) // potion
-                return classNode;
-            }
-        },
         'flowing_fluid_block': {
             'target': {
                 'type': 'CLASS',
@@ -71,16 +61,6 @@ function initializeCoreMod() {
             },
             'transformer': function(classNode) {
                 ASMAPI.redirectFieldToMethod(classNode, ASMAPI.mapField('f_53525_'), ASMAPI.mapMethod('m_53560_')) // flower
-                return classNode;
-            }
-        },
-        'itemstack': {
-            'target': {
-                'type': 'CLASS',
-                'name': 'net.minecraft.world.item.ItemStack'
-            },
-            'transformer': function(classNode) {
-                ASMAPI.redirectFieldToMethod(classNode, ASMAPI.mapField('f_41589_'), ASMAPI.mapMethod('m_41720_')) // item
                 return classNode;
             }
         }

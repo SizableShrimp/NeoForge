@@ -114,9 +114,8 @@ public class ForgeRegistries
     public static final Registry<HolderSetType> HOLDER_SET_TYPES = DEFERRED_HOLDER_SET_TYPES.makeRegistry(registryBuilder -> {});
     static final DeferredRegister<ItemDisplayContext> DEFERRED_DISPLAY_CONTEXTS = DeferredRegister.create(Keys.DISPLAY_CONTEXTS, Keys.DISPLAY_CONTEXTS.location().getNamespace());
     public static final Registry<ItemDisplayContext> DISPLAY_CONTEXTS = DEFERRED_DISPLAY_CONTEXTS.makeRegistry(registryBuilder -> registryBuilder.sync(true)
-            .defaultKey(new ResourceLocation("none"))
             .maxId(128 * 2) // 0 -> 127 gets positive ID, 128 -> 256 gets negative ID
-            .callback(ItemDisplayContext.ADD_CALLBACK));
+            .defaultKey(new ResourceLocation("none")));
 
     public static final class Keys {
         // Builtin Registries

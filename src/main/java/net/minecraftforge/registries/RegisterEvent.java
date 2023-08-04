@@ -92,9 +92,9 @@ public class RegisterEvent extends Event implements IModBusEvent
     }
 
     /**
+     * @param key the registry key to compare again {@link #getRegistryKey()}
      * @return The registry typed to the given registry key if it matches {@link #getRegistryKey()},
      * or {@code null} if it does not match.
-     * @param key the registry key to compare again {@link #getRegistryKey()}
      */
     @SuppressWarnings("unchecked")
     public <T> Registry<T> getRegistry(ResourceKey<? extends Registry<T>> key)
