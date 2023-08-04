@@ -7,8 +7,8 @@ package net.minecraftforge.network;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Multimap;
 
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.ModList;
 
@@ -101,13 +101,21 @@ public class ConnectionData
 
         /**
          * Creates a ModMismatchData instance from given mismatched registry entries. In this case, the mismatched data is always treated as originating from the client because registry entries missing on the server never cause the handshake to fail.
-         * @param mismatchedRegistryData The list of mismatched registries and the associated mismatched registry entries. The data is stored like this: "registryNamespace:registryPath" -> "entryNamespace:entryPath"
+         * @param mismatchedRegistryData The set of mismatched resource keys for registry entries.
          * @param connectionData The connection data instance responsible for collecting the server mod data.
          */
-        public static ModMismatchData registry(Multimap<ResourceLocation, ResourceLocation> mismatchedRegistryData, ConnectionData connectionData)
+        public static ModMismatchData registry(Set<ResourceKey<?>> mismatchedRegistryData, ConnectionData connectionData)
         {
-            List<ResourceLocation> mismatchedRegistryMods = mismatchedRegistryData.values().stream().map(ResourceLocation::getNamespace).distinct().map(id -> new ResourceLocation(id, "")).toList();
-            Map<ResourceLocation, String> mismatchedRegistryModData = mismatchedRegistryMods.stream().map(id -> ModList.get().getModContainerById(id.getNamespace()).map(modContainer -> Pair.of(id, modContainer.getModInfo().getVersion().toString())).orElse(Pair.of(id, NetworkRegistry.ABSENT.version()))).collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+            List<ResourceLocation> mismatchedRegistryMods = mismatchedRegistryData.stream()
+                    .map(k -> k.location().getNamespace())
+                    .distinct()
+                    .map(id -> new ResourceLocation(id, ""))
+                    .toList();
+            Map<ResourceLocation, String> mismatchedRegistryModData = mismatchedRegistryMods.stream()
+                    .map(id -> ModList.get().getModContainerById(id.getNamespace())
+                            .map(modContainer -> Pair.of(id, modContainer.getModInfo().getVersion().toString()))
+                            .orElse(Pair.of(id, NetworkRegistry.ABSENT.version())))
+                    .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
             Map<ResourceLocation, Pair<String, String>> presentModData = getServerSidePresentModData(mismatchedRegistryModData.keySet(), connectionData);
 
             return new ModMismatchData(mismatchedRegistryModData, presentModData, false);

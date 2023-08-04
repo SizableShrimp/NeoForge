@@ -5,7 +5,6 @@
 
 package net.minecraftforge.registries;
 
-import com.google.common.collect.ImmutableMap;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.Registry;
@@ -58,11 +57,11 @@ public class RegistryManager {
     }
 
     public static void revertToVanilla() {
-        applySnapshot(vanillaSnapshot, false);
+        applySnapshot(vanillaSnapshot, false, true);
     }
 
     public static void revertToFrozen() {
-        applySnapshot(frozenSnapshot, false);
+        applySnapshot(frozenSnapshot, false, true);
     }
 
     /**
@@ -71,8 +70,10 @@ public class RegistryManager {
      * @param snapshots the map of registry name to snapshot
      * @param allowMissing if {@code true}, missing registries will be skipped but will log a warning.
      * Otherwise, an exception will be thrown if a registry name in the snapshot map is missing.
+     * @param isLocalWorld changes the logging depending on if the snapshot is coming from a local save or a remote connection
+     * @return the set of unhandled missing registry entries after firing remapping events for mods
      */
-    public static void applySnapshot(Map<ResourceLocation, RegistrySnapshot> snapshots, boolean allowMissing) {
+    public static Set<ResourceKey<?>> applySnapshot(Map<ResourceLocation, RegistrySnapshot> snapshots, boolean allowMissing, boolean isLocalWorld) {
         List<ResourceLocation> missingRegistries = allowMissing ? new ArrayList<>() : null;
         Set<ResourceKey<?>> missingEntries = new HashSet<>();
 
@@ -90,28 +91,26 @@ public class RegistryManager {
         });
 
         if (missingRegistries != null && !missingRegistries.isEmpty()) {
-            String header = "NeoForge detected missing/unknown registries.\n\n" +
-                            "There are " + missingRegistries.size() + " missing registries in this save.\n" +
-                            "These missing registries will be deleted from the save file on next save.\n" +
-                            "Missing Registries:\n";
+            StringBuilder builder = new StringBuilder("NeoForge detected missing/unknown registries.\n\n")
+                    .append("There are ").append(missingRegistries.size()).append(" missing registries.\n");
+            if (isLocalWorld)
+                builder.append("These missing registries will be deleted from the save file on next save.\n");
 
-            StringBuilder builder = new StringBuilder();
+            builder.append("Missing Registries:\n");
 
             for (ResourceLocation registryName : missingRegistries)
                 builder.append(registryName).append("\n");
 
-            LOGGER.warn(REGISTRIES, header);
             LOGGER.warn(REGISTRIES, builder.toString());
         }
 
-        Map<ResourceLocation, Map<ResourceLocation, IdMappingEvent.IdRemapping>> remaps = ImmutableMap.of();
+        Set<ResourceKey<?>> unhandled = missingEntries.isEmpty()
+                ? Set.of()
+                : RegistryRemapHandler.handleRemaps(missingEntries, isLocalWorld);
 
-        if (!missingEntries.isEmpty()) {
-            remaps = RegistryRemapHandler.handleRemaps(missingEntries);
-        }
-
-        GameData.fireRemapEvent(remaps, vanillaSnapshot == snapshots || frozenSnapshot == snapshots);
         ObjectHolderRegistry.applyObjectHolders();
+
+        return unhandled;
     }
 
     private static <T> void applySnapshot(MappedRegistry<T> registry, RegistrySnapshot snapshot, Set<ResourceKey<?>> missing) {

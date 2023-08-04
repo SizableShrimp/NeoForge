@@ -6,7 +6,6 @@
 package net.minecraftforge.network;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.Registry;
 import net.minecraft.network.Connection;
@@ -18,12 +17,11 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.network.ServerLoginPacketListenerImpl;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.LogMessageAdapter;
 import net.minecraftforge.event.entity.player.PlayerNegotiationEvent;
 import net.minecraftforge.network.ConnectionData.ModMismatchData;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.DataPackRegistriesHooks;
-import net.minecraftforge.registries.GameData;
+import net.minecraftforge.registries.RegistryManager;
 import net.minecraftforge.registries.RegistrySnapshot;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -290,16 +288,15 @@ public class HandshakeHandler
     private boolean handleRegistryLoading(final Supplier<NetworkEvent.Context> contextSupplier) {
         // We use a countdown latch to suspend the impl thread pending the client thread processing the registry data
         AtomicBoolean successfulConnection = new AtomicBoolean(false);
-        AtomicReference<Multimap<ResourceLocation, ResourceLocation>> registryMismatches = new AtomicReference<>();
+        AtomicReference<Set<ResourceKey<?>>> registryMismatches = new AtomicReference<>();
         CountDownLatch block = new CountDownLatch(1);
         contextSupplier.get().enqueueWork(() -> {
             LOGGER.debug(FMLHSMARKER, "Injecting registry snapshot from server.");
-            // TODO reg: fix
-            final Multimap<ResourceLocation, ResourceLocation> missingData = null; // GameData.injectSnapshot(registrySnapshots, false, false);
+            final Set<ResourceKey<?>> missingData = RegistryManager.applySnapshot(this.registrySnapshots, true, false);
             LOGGER.debug(FMLHSMARKER, "Snapshot injected.");
-            if (!missingData.isEmpty()) {
-                LOGGER.error(FMLHSMARKER, "Missing registry data for impl connection:\n{}", LogMessageAdapter.adapt(sb->
-                        missingData.forEach((reg, entry)-> sb.append("\t").append(reg).append(": ").append(entry).append('\n'))));
+            if (!missingData.isEmpty() && LOGGER.isErrorEnabled(FMLHSMARKER)) {
+                LOGGER.error(FMLHSMARKER, "Missing registry data for impl connection:\n{}",
+                        missingData.stream().map(ResourceKey::toString).collect(Collectors.joining("\n")));
             }
             successfulConnection.set(missingData.isEmpty());
             registryMismatches.set(missingData);

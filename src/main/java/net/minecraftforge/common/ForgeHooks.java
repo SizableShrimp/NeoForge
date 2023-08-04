@@ -1359,31 +1359,26 @@ public class ForgeHooks
             }
         }
 
-        Multimap<ResourceLocation, ResourceLocation> failedElements = null;
+        Set<ResourceKey<?>> failedElements = Set.of();
 
         if (tag.contains("Registries"))
         {
-            Map<ResourceLocation, RegistrySnapshot> snapshot = new HashMap<>();
+            Map<ResourceLocation, RegistrySnapshot> snapshots = new HashMap<>();
             CompoundTag regs = tag.getCompound("Registries");
             for (String key : regs.getAllKeys())
             {
-                snapshot.put(new ResourceLocation(key), RegistrySnapshot.read(regs.getCompound(key)));
+                snapshots.put(new ResourceLocation(key), RegistrySnapshot.read(regs.getCompound(key)));
             }
-            // TODO reg: fix
-            // failedElements = GameData.injectSnapshot(snapshot, true, true);
+            failedElements = RegistryManager.applySnapshot(snapshots, true, true);
         }
 
-        if (failedElements != null && !failedElements.isEmpty())
+        if (!failedElements.isEmpty() && LOGGER.isErrorEnabled(WORLDPERSISTENCE))
         {
-            StringBuilder buf = new StringBuilder();
-            buf.append("Fancy Mod Loader could not load this save.\n\n")
-                .append("There are ").append(failedElements.size()).append(" unassigned registry entries in this save.\n")
-                .append("You will not be able to load until they are present again.\n\n");
+            StringBuilder buf = new StringBuilder()
+                .append("There are ").append(failedElements.size()).append(" unassigned registry entries in this save.\n\n");
 
-            failedElements.asMap().forEach((name, entries) -> {
-                buf.append("Missing ").append(name).append(":\n");
-                entries.forEach(rl -> buf.append("    ").append(rl).append("\n"));
-            });
+            failedElements.forEach(k -> buf.append("Missing ").append(k).append('\n'));
+
             LOGGER.error(WORLDPERSISTENCE, buf.toString());
         }
     }
