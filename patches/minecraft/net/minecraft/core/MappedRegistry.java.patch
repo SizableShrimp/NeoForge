@@ -5,7 +5,7 @@
  import org.slf4j.Logger;
  
 -public class MappedRegistry<T> implements WritableRegistry<T> {
-+public class MappedRegistry<T> extends net.minecraftforge.registries.NewForgeRegistry<T> implements WritableRegistry<T> {
++public class MappedRegistry<T> extends net.minecraftforge.registries.ForgeRegistry<T> implements WritableRegistry<T> {
     private static final Logger f_211050_ = LogUtils.getLogger();
     final ResourceKey<? extends Registry<T>> f_256817_;
     private final ObjectList<Holder.Reference<T>> f_122672_ = new ObjectArrayList<>(256);

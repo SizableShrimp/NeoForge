@@ -52,7 +52,7 @@ public class RegistrySnapshot {
      */
     public <T> RegistrySnapshot(Registry<T> registry, boolean full) {
         registry.keySet().forEach(key -> this.ids.put(key, registry.getId(key)));
-        this.aliases.putAll(((NewForgeRegistry<T>) registry).aliases);
+        this.aliases.putAll(((ForgeRegistry<T>) registry).aliases);
 
         if (full) {
             MappedRegistry<T> backup = new MappedRegistry<>(registry.key(), registry.registryLifecycle());
@@ -95,10 +95,10 @@ public class RegistrySnapshot {
         data.put("Ids", ids);
 
         ListTag aliases = new ListTag();
-        this.aliases.entrySet().forEach(e -> {
+        this.aliases.forEach((k, v) -> {
             CompoundTag tag = new CompoundTag();
-            tag.putString("K", e.getKey().toString());
-            tag.putString("V", e.getValue().toString());
+            tag.putString("K", k.toString());
+            tag.putString("V", v.toString());
             aliases.add(tag);
         });
         data.put("Aliases", aliases);

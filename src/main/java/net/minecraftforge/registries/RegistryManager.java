@@ -127,7 +127,7 @@ public class RegistryManager {
             applySnapshot(registry, snapshot, missingEntries);
         });
 
-        if (missingRegistries != null && !missingRegistries.isEmpty()) {
+        if (missingRegistries != null && !missingRegistries.isEmpty() && LOGGER.isWarnEnabled(REGISTRIES)) {
             StringBuilder builder = new StringBuilder("NeoForge detected missing/unknown registries.\n\n")
                     .append("There are ").append(missingRegistries.size()).append(" missing registries.\n");
             if (isLocalWorld)
@@ -153,7 +153,7 @@ public class RegistryManager {
     private static <T> void applySnapshot(MappedRegistry<T> registry, RegistrySnapshot snapshot, Set<ResourceKey<?>> missing) {
         // Needed for package-private operations
         // noinspection UnnecessaryLocalVariable
-        NewForgeRegistry<T> forgeRegistry = registry;
+        ForgeRegistry<T> forgeRegistry = registry;
         ResourceKey<? extends Registry<T>> registryKey = registry.key();
         Registry<T> backup = snapshot.getFullBackup();
 
@@ -188,8 +188,8 @@ public class RegistryManager {
      * or {@link BuiltInRegistries#REGISTRY} if the registry access is null.
      *
      * @param registryAccess the registry access to take a snapshot of, or {@code null} to use {@link BuiltInRegistries#REGISTRY}
-     * @param snapshotType If {@link SnapshotType#SAVE_TO_DISK}, only takes a snapshot of registries set to {@linkplain INewForgeRegistry#doesSerialize() serialize}.
-     * If {@link SnapshotType#SYNC_TO_CLIENT}, only takes a snapshot of registries set to {@linkplain INewForgeRegistry#doesSync() sync to the client}.
+     * @param snapshotType If {@link SnapshotType#SAVE_TO_DISK}, only takes a snapshot of registries set to {@linkplain IForgeRegistry#doesSerialize() serialize}.
+     * If {@link SnapshotType#SYNC_TO_CLIENT}, only takes a snapshot of registries set to {@linkplain IForgeRegistry#doesSync() sync to the client}.
      * If {@link SnapshotType#FULL}, takes a snapshot of all registries including entries.
      * @return the snapshot map of registry name to snapshot data
      */

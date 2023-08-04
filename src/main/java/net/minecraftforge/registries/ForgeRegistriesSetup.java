@@ -71,7 +71,7 @@ public class ForgeRegistriesSetup {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void onModifyRegistry(ModifyRegistryEvent event) {
-        if (!(event.getRegistry() instanceof NewForgeRegistry<?> forgeRegistry))
+        if (!(event.getRegistry() instanceof ForgeRegistry<?> forgeRegistry))
             return;
 
         ResourceKey<? extends Registry<?>> registryKey = event.getRegistryKey();
@@ -86,16 +86,16 @@ public class ForgeRegistriesSetup {
             forgeRegistry.setSync(true);
 
         if (registryKey == Registries.BLOCK) {
-            ((NewForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.BlockCallbacks.INSTANCE);
+            ((ForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.BlockCallbacks.INSTANCE);
         } else if (registryKey == Registries.ITEM) {
-            ((NewForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.ItemCallbacks.INSTANCE);
+            ((ForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.ItemCallbacks.INSTANCE);
         } else if (registryKey == Registries.ATTRIBUTE) {
-            ((NewForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.AttributeCallbacks.INSTANCE);
+            ((ForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.AttributeCallbacks.INSTANCE);
         } else if (registryKey == Registries.POINT_OF_INTEREST_TYPE) {
-            ((NewForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.PoiTypeCallbacks.INSTANCE);
+            ((ForgeRegistry) forgeRegistry).addCallback(ForgeRegistryCallbacks.PoiTypeCallbacks.INSTANCE);
         } else if (registryKey == ForgeRegistries.Keys.DISPLAY_CONTEXTS) {
             // We add this callback here to not cause a tricky classloading loop with ForgeRegistries#DISPLAY_CONTEXTS and ItemDisplayContext#CODEC
-            ((NewForgeRegistry) forgeRegistry).addCallback(ItemDisplayContext.ADD_CALLBACK);
+            ((ForgeRegistry) forgeRegistry).addCallback(ItemDisplayContext.ADD_CALLBACK);
         }
     }
 }

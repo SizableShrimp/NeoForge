@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @ApiStatus.Internal
-public abstract class NewForgeRegistry<T> implements Registry<T> {
+public abstract class ForgeRegistry<T> implements Registry<T> {
     protected final List<AddCallback<T>> addCallbacks = new ArrayList<>();
     protected final List<BakeCallback<T>> bakeCallbacks = new ArrayList<>();
     protected final List<ClearCallback<T>> clearCallbacks = new ArrayList<>();

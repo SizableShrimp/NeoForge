@@ -85,7 +85,7 @@ public class NewRegistryEvent extends Event implements IModBusEvent {
     void fill() {
         RuntimeException aggregate = new RuntimeException();
 
-        if (BuiltInRegistries.REGISTRY instanceof NewForgeRegistry<?> rootRegistry)
+        if (BuiltInRegistries.REGISTRY instanceof ForgeRegistry<?> rootRegistry)
             rootRegistry.unfreeze();
 
         for (Object obj : this.registries) {

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus;
  * For builtin registries, this event is fired after vanilla entries are registered but before modded entries.
  * For datapack registries, this event is fired before any entries are registered.
  * <p>
- * This event can be used to register {@linkplain INewForgeRegistry#addCallback(Callback) callbacks} to the registry.
+ * This event can be used to register {@linkplain IForgeRegistry#addCallback(Callback) callbacks} to the registry.
  * </p>
  *
  * <p>This event is not {@linkplain Cancelable cancellable}, and does not {@linkplain HasResult have a result}.</p>

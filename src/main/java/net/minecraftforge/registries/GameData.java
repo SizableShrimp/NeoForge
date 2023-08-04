@@ -64,7 +64,7 @@ public class GameData
     public static void unfreezeData()
     {
         LOGGER.debug(REGISTRIES, "Unfreezing registries");
-        BuiltInRegistries.REGISTRY.stream().filter(r -> r instanceof NewForgeRegistry).forEach(r -> ((NewForgeRegistry<?>) r).unfreeze());
+        BuiltInRegistries.REGISTRY.stream().filter(r -> r instanceof ForgeRegistry).forEach(r -> ((ForgeRegistry<?>) r).unfreeze());
     }
 
     public static void freezeData()

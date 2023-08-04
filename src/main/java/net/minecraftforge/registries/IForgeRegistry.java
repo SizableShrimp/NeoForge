@@ -13,7 +13,7 @@ import net.minecraftforge.registries.callbacks.Callback;
 
 import java.util.Optional;
 
-public interface INewForgeRegistry<T> {
+public interface IForgeRegistry<T> {
     /**
      * {@return whether this registry should be serialized to disk}
      */
