@@ -288,19 +288,25 @@ public class HandshakeHandler
     private boolean handleRegistryLoading(final Supplier<NetworkEvent.Context> contextSupplier) {
         // We use a countdown latch to suspend the impl thread pending the client thread processing the registry data
         AtomicBoolean successfulConnection = new AtomicBoolean(false);
-        AtomicReference<Set<ResourceKey<?>>> registryMismatches = new AtomicReference<>();
+        AtomicReference<Set<ResourceKey<?>>> registryMismatches = new AtomicReference<>(Set.of());
         CountDownLatch block = new CountDownLatch(1);
         contextSupplier.get().enqueueWork(() -> {
-            LOGGER.debug(FMLHSMARKER, "Injecting registry snapshot from server.");
-            final Set<ResourceKey<?>> missingData = RegistryManager.applySnapshot(this.registrySnapshots, true, false);
-            LOGGER.debug(FMLHSMARKER, "Snapshot injected.");
-            if (!missingData.isEmpty() && LOGGER.isErrorEnabled(FMLHSMARKER)) {
-                LOGGER.error(FMLHSMARKER, "Missing registry data for impl connection:\n{}",
-                        missingData.stream().map(ResourceKey::toString).collect(Collectors.joining("\n")));
+            try {
+                LOGGER.debug(FMLHSMARKER, "Injecting registry snapshot from server.");
+                // We are only syncing builtin registries here, so we pass in null for the registry access
+                final Set<ResourceKey<?>> missingData = RegistryManager.applySnapshot(null, this.registrySnapshots, true, false);
+                LOGGER.debug(FMLHSMARKER, "Snapshot injected.");
+                if (!missingData.isEmpty() && LOGGER.isErrorEnabled(FMLHSMARKER)) {
+                    LOGGER.error(FMLHSMARKER, "Missing registry data for impl connection:\n{}",
+                            missingData.stream().map(ResourceKey::toString).collect(Collectors.joining("\n")));
+                }
+                successfulConnection.set(missingData.isEmpty());
+                registryMismatches.set(missingData);
+            } catch (Throwable t) {
+                LOGGER.error(FMLHSMARKER, "Encountered error during sync of registry data", t);
+            } finally {
+                block.countDown();
             }
-            successfulConnection.set(missingData.isEmpty());
-            registryMismatches.set(missingData);
-            block.countDown();
         });
         LOGGER.debug(FMLHSMARKER, "Waiting for registries to load.");
         try {
@@ -313,7 +319,8 @@ public class HandshakeHandler
         } else {
             LOGGER.error(FMLHSMARKER, "Failed to load registry, closing connection.");
             //Populate the mod mismatch attribute with a new mismatch data instance to indicate that the disconnect happened due to a mod mismatch
-            this.manager.channel().attr(NetworkConstants.FML_MOD_MISMATCH_DATA).set(ModMismatchData.registry(registryMismatches.get(), NetworkHooks.getConnectionData(contextSupplier.get().getNetworkManager())));
+            this.manager.channel().attr(NetworkConstants.FML_MOD_MISMATCH_DATA)
+                    .set(ModMismatchData.registry(registryMismatches.get(), NetworkHooks.getConnectionData(contextSupplier.get().getNetworkManager())));
             this.manager.disconnect(Component.literal("Failed to synchronize registry data from server, closing connection"));
         }
         return successfulConnection.get();

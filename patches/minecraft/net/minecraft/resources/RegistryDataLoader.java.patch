@@ -17,3 +17,11 @@
              E e = dataresult.getOrThrow(false, (p_248715_) -> {
              });
              p_256211_.m_255290_(resourcekey, e, resource.m_247137_() ? Lifecycle.stable() : dataresult.lifecycle());
+@@ -156,6 +_,7 @@
+    public static record RegistryData<T>(ResourceKey<? extends Registry<T>> f_243794_, Codec<T> f_244580_) {
+       Pair<WritableRegistry<?>, RegistryDataLoader.Loader> m_245364_(Lifecycle p_251662_, Map<ResourceKey<?>, Exception> p_251565_) {
+          WritableRegistry<T> writableregistry = new MappedRegistry<>(this.f_243794_, p_251662_);
++         net.minecraftforge.registries.RegistryManager.postModifyRegistryEvent(writableregistry);
+          RegistryDataLoader.Loader registrydataloader$loader = (p_255511_, p_255512_) -> {
+             RegistryDataLoader.m_255048_(p_255512_, p_255511_, this.f_243794_, writableregistry, this.f_244580_, p_251565_);
+          };

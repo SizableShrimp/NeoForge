@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/WorldLoader.java
 +++ b/net/minecraft/server/WorldLoader.java
-@@ -28,7 +_,7 @@
+@@ -28,13 +_,14 @@
           Pair<WorldDataConfiguration, CloseableResourceManager> pair = p_214363_.f_214378_.m_214399_();
           CloseableResourceManager closeableresourcemanager = pair.getSecond();
           LayeredRegistryAccess<RegistryLayer> layeredregistryaccess = RegistryLayer.m_245849_();
@@ -9,3 +9,10 @@
           RegistryAccess.Frozen registryaccess$frozen = layeredregistryaccess1.m_246035_(RegistryLayer.DIMENSIONS);
           RegistryAccess.Frozen registryaccess$frozen1 = RegistryDataLoader.m_247207_(closeableresourcemanager, registryaccess$frozen, RegistryDataLoader.f_244547_);
           WorldDataConfiguration worlddataconfiguration = pair.getFirst();
+          WorldLoader.DataLoadOutput<D> dataloadoutput = p_214364_.m_214412_(new WorldLoader.DataLoadContext(closeableresourcemanager, worlddataconfiguration, registryaccess$frozen, registryaccess$frozen1));
+          LayeredRegistryAccess<RegistryLayer> layeredregistryaccess2 = layeredregistryaccess1.m_247705_(RegistryLayer.DIMENSIONS, dataloadoutput.f_244143_);
+          RegistryAccess.Frozen registryaccess$frozen2 = layeredregistryaccess2.m_246035_(RegistryLayer.RELOADABLE);
++         net.minecraftforge.registries.RegistryManager.applyCurrentDiskSnapshot(registryaccess$frozen2);
+          return ReloadableServerResources.m_247740_(closeableresourcemanager, registryaccess$frozen2, worlddataconfiguration.f_243973_(), p_214363_.f_214379_(), p_214363_.f_214380_(), p_214366_, p_214367_).whenComplete((p_214370_, p_214371_) -> {
+             if (p_214371_ != null) {
+                closeableresourcemanager.close();

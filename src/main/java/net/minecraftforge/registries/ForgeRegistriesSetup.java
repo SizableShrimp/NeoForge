@@ -79,6 +79,9 @@ public class ForgeRegistriesSetup {
         if (VANILLA_SERIALIZE_KEYS.contains(registryKey))
             forgeRegistry.setSerialize(true);
 
+        if (!event.isBuiltin())
+            return; // We only care about builtin registries past this point
+
         if (VANILLA_SYNC_KEYS.contains(registryKey))
             forgeRegistry.setSync(true);
 

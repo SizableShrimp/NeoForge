@@ -10,7 +10,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.callbacks.Callback;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -91,17 +90,6 @@ public interface INewForgeRegistry<T> {
      * or {@code -1} if the name is not present in this registry.
      */
     int getId(ResourceLocation name);
-
-    /**
-     * Gets the object linked to the given integer id.
-     * The id must be greater than or equal to zero and less than the size of this registry.
-     *
-     * @param id the integer id to lookup
-     * @return the object linked to the given integer id,
-     * or {@code null} if the id is not present in this registry.
-     */
-    @Nullable
-    T get(int id);
 
     /**
      * Gets the optional holder linked to the given value in this registry.

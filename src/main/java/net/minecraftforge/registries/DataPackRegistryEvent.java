@@ -37,6 +37,8 @@ public class DataPackRegistryEvent extends Event implements IModBusEvent
      * <p>
      * This event is fired on the {@linkplain FMLJavaModLoadingContext#getModEventBus() mod-specific event bus},
      * on both {@linkplain LogicalSide logical sides}.
+     *
+     * @see ModifyRegistryEvent
      */
     public static final class NewRegistry extends DataPackRegistryEvent
     {

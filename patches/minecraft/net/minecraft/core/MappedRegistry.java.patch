@@ -55,14 +55,13 @@
 +      super.clear(full);
 +      this.f_122672_.clear();
 +      this.f_122673_.clear();
-+      if (this.f_211051_ != null)
-+         this.f_211051_.clear();
++      this.f_211051_ = null;
 +      if (full) {
 +         this.f_205841_.clear();
-+         this.f_205842_.clear();
 +         this.f_205843_.clear();
 +         this.f_122676_.clear();
 +         this.f_205844_.clear();
++         this.f_244282_ = null;
 +      }
 +   }
 +
@@ -71,8 +70,9 @@
 +       this.m_205921_(key);
 +       if (id > this.getMaxId())
 +          throw new IllegalStateException(String.format(java.util.Locale.ENGLISH, "Invalid id %d - maximum id range of %d exceeded.", id, this.getMaxId()));
-+       if (this.m_7942_(id) != null)
-+          throw new IllegalStateException("Duplicate id " + id + " for " + key + " and " + this.m_7981_(this.m_7942_(id)));
++       this.m_203300_(id).ifPresent(holder -> {
++          throw new IllegalStateException("Duplicate id " + id + " for " + key + " and " + holder.m_205785_());
++       });
 +       if (this.f_122678_ <= id) {
 +          this.f_122678_ = id + 1;
 +       }
@@ -121,19 +121,13 @@
        return m_205865_(reference);
     }
  
-@@ -300,14 +_,32 @@
+@@ -300,14 +_,26 @@
        return this.f_205842_.containsKey(p_175392_);
     }
  
 +   @Override
 +   protected void unfreeze() {
 +      this.f_205845_ = false;
-+   }
-+
-+   @org.jetbrains.annotations.Nullable
-+   @Override
-+   public T get(int id) {
-+      return id >= 0 && id < this.f_122672_.size() ? this.f_122672_.get(id).m_203334_() : null;
 +   }
 +
 +   @Override

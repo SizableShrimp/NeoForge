@@ -58,7 +58,7 @@ public interface IForgeFriendlyByteBuf
     default <T> T readRegistryIdUnsafe(@NotNull Registry<T> registry)
     {
         int id = self().readVarInt();
-        return registry.get(id);
+        return registry.byId(id);
     }
 
     /**
@@ -93,7 +93,7 @@ public interface IForgeFriendlyByteBuf
     default <T> T readRegistryId()
     {
         ResourceLocation location = self().readResourceLocation();
-        return ((Registry<T>) BuiltInRegistries.REGISTRY.get(location)).get(self().readVarInt());
+        return ((Registry<T>) BuiltInRegistries.REGISTRY.get(location)).byId(self().readVarInt());
     }
 
     /**
