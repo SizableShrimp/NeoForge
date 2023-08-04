@@ -8,7 +8,6 @@ package net.minecraftforge.registries;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -16,7 +15,6 @@ import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.network.HandshakeMessages;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
@@ -27,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public class RegistryManager {
@@ -36,7 +33,6 @@ public class RegistryManager {
     private static Set<ResourceLocation> vanillaRegistryKeys = Set.of();
     private static Map<ResourceLocation, RegistrySnapshot> vanillaSnapshot = null;
     private static Map<ResourceLocation, RegistrySnapshot> frozenSnapshot = null;
-    private static Map<ResourceLocation, RegistrySnapshot> currentDiskSnapshot = null;
 
     public static void postNewRegistryEvent() {
         NewRegistryEvent event = new NewRegistryEvent();
@@ -57,63 +53,36 @@ public class RegistryManager {
     }
 
     static void takeVanillaSnapshot() {
-        vanillaSnapshot = takeSnapshot(null, SnapshotType.FULL);
+        vanillaSnapshot = takeSnapshot(SnapshotType.FULL);
     }
 
     static void takeFrozenSnapshot() {
-        frozenSnapshot = takeSnapshot(null, SnapshotType.FULL);
-    }
-
-    public static void setCurrentDiskSnapshot(Map<ResourceLocation, RegistrySnapshot> snapshot) {
-        currentDiskSnapshot = snapshot;
-    }
-
-    public static void applyCurrentDiskSnapshot(RegistryAccess registryAccess) {
-        // If it's null then someone is incorrectly calling this method or this is a new save
-        if (currentDiskSnapshot == null)
-            return;
-
-        Set<ResourceKey<?>> failedElements = RegistryManager.applySnapshot(registryAccess, currentDiskSnapshot, true, true);
-        currentDiskSnapshot = null;
-
-        if (!failedElements.isEmpty() && LOGGER.isErrorEnabled()) {
-            StringBuilder buf = new StringBuilder()
-                    .append("There are ").append(failedElements.size()).append(" unassigned registry entries in this save.\n\n");
-
-            failedElements.forEach(k -> buf.append("Missing ").append(k).append('\n'));
-
-            LOGGER.error(buf.toString());
-        }
+        frozenSnapshot = takeSnapshot(SnapshotType.FULL);
     }
 
     public static void revertToVanilla() {
-        applySnapshot(null, vanillaSnapshot, false, true);
+        applySnapshot(vanillaSnapshot, false, true);
     }
 
     public static void revertToFrozen() {
-        applySnapshot(null, frozenSnapshot, false, true);
+        applySnapshot(frozenSnapshot, false, true);
     }
 
     /**
-     * Applies the snapshot to the current state of the provided registry access,
-     * or {@link BuiltInRegistries#REGISTRY} if the registry access is null.
+     * Applies the snapshot to the current state of the {@link BuiltInRegistries}.
      *
-     * @param registryAccess the registry access to apply the snapshot to, or {@code null} to use {@link BuiltInRegistries#REGISTRY}
      * @param snapshots the map of registry name to snapshot
      * @param allowMissing if {@code true}, missing registries will be skipped but will log a warning.
      * Otherwise, an exception will be thrown if a registry name in the snapshot map is missing.
      * @param isLocalWorld changes the logging depending on if the snapshot is coming from a local save or a remote connection
      * @return the set of unhandled missing registry entries after firing remapping events for mods
      */
-    public static Set<ResourceKey<?>> applySnapshot(@Nullable RegistryAccess registryAccess, Map<ResourceLocation, RegistrySnapshot> snapshots, boolean allowMissing, boolean isLocalWorld) {
+    public static Set<ResourceKey<?>> applySnapshot(Map<ResourceLocation, RegistrySnapshot> snapshots, boolean allowMissing, boolean isLocalWorld) {
         List<ResourceLocation> missingRegistries = allowMissing ? new ArrayList<>() : null;
         Set<ResourceKey<?>> missingEntries = new HashSet<>();
-        Set<ResourceLocation> registryKeys = registryAccess == null
-                ? BuiltInRegistries.REGISTRY.keySet()
-                : registryAccess.registries().map(e -> e.key().location()).collect(Collectors.toSet());
 
         snapshots.forEach((registryName, snapshot) -> {
-            if (!registryKeys.contains(registryName)) {
+            if (!BuiltInRegistries.REGISTRY.containsKey(registryName)) {
                 if (!allowMissing)
                     throw new IllegalStateException("Tried to applied snapshot with registry name " + registryName + " but was not found");
 
@@ -121,9 +90,7 @@ public class RegistryManager {
                 return;
             }
 
-            MappedRegistry<?> registry = (MappedRegistry<?>) (registryAccess == null
-                    ? BuiltInRegistries.REGISTRY.get(registryName)
-                    : registryAccess.registryOrThrow(ResourceKey.createRegistryKey(registryName)));
+            MappedRegistry<?> registry = (MappedRegistry<?>) BuiltInRegistries.REGISTRY.get(registryName);
             applySnapshot(registry, snapshot, missingEntries);
         });
 
@@ -184,23 +151,18 @@ public class RegistryManager {
     }
 
     /**
-     * Takes a snapshot of the current registries registered to the provided registry access,
-     * or {@link BuiltInRegistries#REGISTRY} if the registry access is null.
+     * Takes a snapshot of the current registries registered to {@link BuiltInRegistries#REGISTRY}.
      *
-     * @param registryAccess the registry access to take a snapshot of, or {@code null} to use {@link BuiltInRegistries#REGISTRY}
      * @param snapshotType If {@link SnapshotType#SAVE_TO_DISK}, only takes a snapshot of registries set to {@linkplain IForgeRegistry#doesSerialize() serialize}.
      * If {@link SnapshotType#SYNC_TO_CLIENT}, only takes a snapshot of registries set to {@linkplain IForgeRegistry#doesSync() sync to the client}.
      * If {@link SnapshotType#FULL}, takes a snapshot of all registries including entries.
      * @return the snapshot map of registry name to snapshot data
      */
-    public static Map<ResourceLocation, RegistrySnapshot> takeSnapshot(@Nullable RegistryAccess registryAccess, SnapshotType snapshotType) {
+    public static Map<ResourceLocation, RegistrySnapshot> takeSnapshot(SnapshotType snapshotType) {
         Map<ResourceLocation, RegistrySnapshot> map = new HashMap<>();
         boolean full = snapshotType == SnapshotType.FULL;
-        Iterable<? extends Registry<?>> registries = registryAccess == null
-                ? BuiltInRegistries.REGISTRY
-                : () -> registryAccess.registries().<Registry<?>>map(RegistryAccess.RegistryEntry::value).iterator();
 
-        for (Registry<?> registry : registries) {
+        for (Registry<?> registry : BuiltInRegistries.REGISTRY) {
             if (snapshotType == SnapshotType.SAVE_TO_DISK) {
                 if (!registry.doesSerialize())
                     continue;
@@ -218,8 +180,7 @@ public class RegistryManager {
         if (isLocal)
             return List.of();
 
-        // Datapack registries have their own dedicated syncing process, so we pass in null for the registry access
-        return takeSnapshot(null, SnapshotType.SYNC_TO_CLIENT).entrySet().stream()
+        return takeSnapshot(SnapshotType.SYNC_TO_CLIENT).entrySet().stream()
                 .map(e -> Pair.of("Registry " + e.getKey(), new HandshakeMessages.S2CRegistry(e.getKey(), e.getValue())))
                 .toList();
     }

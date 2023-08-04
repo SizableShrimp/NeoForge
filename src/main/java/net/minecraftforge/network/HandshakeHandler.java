@@ -293,8 +293,7 @@ public class HandshakeHandler
         contextSupplier.get().enqueueWork(() -> {
             try {
                 LOGGER.debug(FMLHSMARKER, "Injecting registry snapshot from server.");
-                // We are only syncing builtin registries here, so we pass in null for the registry access
-                final Set<ResourceKey<?>> missingData = RegistryManager.applySnapshot(null, this.registrySnapshots, true, false);
+                final Set<ResourceKey<?>> missingData = RegistryManager.applySnapshot(this.registrySnapshots, true, false);
                 LOGGER.debug(FMLHSMARKER, "Snapshot injected.");
                 if (!missingData.isEmpty() && LOGGER.isErrorEnabled(FMLHSMARKER)) {
                     LOGGER.error(FMLHSMARKER, "Missing registry data for impl connection:\n{}",

@@ -44,8 +44,7 @@ public class ForgeRegistriesSetup {
      * The set of vanilla registries which should be serialized to disk.
      */
     private static final Set<ResourceKey<? extends Registry<?>>> VANILLA_SERIALIZE_KEYS = Set.of(
-            Registries.MOB_EFFECT, // Required for MobEffectInstance serialization
-            Registries.BIOME // Required for chunk Biome paletted containers
+            Registries.MOB_EFFECT // Required for MobEffectInstance serialization
     );
     /**
      * The set of vanilla registries which should be synced to the client.
@@ -71,16 +70,13 @@ public class ForgeRegistriesSetup {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void onModifyRegistry(ModifyRegistryEvent event) {
-        if (!(event.getRegistry() instanceof ForgeRegistry<?> forgeRegistry))
+        if (!event.isBuiltin() || !(event.getRegistry() instanceof ForgeRegistry<?> forgeRegistry))
             return;
 
         ResourceKey<? extends Registry<?>> registryKey = event.getRegistryKey();
 
         if (VANILLA_SERIALIZE_KEYS.contains(registryKey))
             forgeRegistry.setSerialize(true);
-
-        if (!event.isBuiltin())
-            return; // We only care about builtin registries past this point
 
         if (VANILLA_SYNC_KEYS.contains(registryKey))
             forgeRegistry.setSync(true);

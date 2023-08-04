@@ -46,7 +46,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.ChatDecorator;
@@ -1251,7 +1250,7 @@ public class ForgeHooks
         return event;
     }
 
-    public static void writeAdditionalLevelSaveData(RegistryAccess registryAccess, WorldData worldData, CompoundTag levelTag)
+    public static void writeAdditionalLevelSaveData(WorldData worldData, CompoundTag levelTag)
     {
         CompoundTag fmlData = new CompoundTag();
         ListTag modList = new ListTag();
@@ -1267,7 +1266,7 @@ public class ForgeHooks
         fmlData.put("Registries", registries);
         LOGGER.debug(WORLDPERSISTENCE, "Gathering id map for writing to world save {}", worldData.getLevelName());
 
-        for (Map.Entry<ResourceLocation, RegistrySnapshot> e : RegistryManager.takeSnapshot(registryAccess, RegistryManager.SnapshotType.SAVE_TO_DISK).entrySet())
+        for (Map.Entry<ResourceLocation, RegistrySnapshot> e : RegistryManager.takeSnapshot(RegistryManager.SnapshotType.SAVE_TO_DISK).entrySet())
         {
             registries.put(e.getKey().toString(), e.getValue().write());
         }
@@ -1359,6 +1358,8 @@ public class ForgeHooks
             }
         }
 
+        Set<ResourceKey<?>> failedElements = Set.of();
+
         if (tag.contains("Registries"))
         {
             Map<ResourceLocation, RegistrySnapshot> snapshots = new HashMap<>();
@@ -1367,7 +1368,17 @@ public class ForgeHooks
             {
                 snapshots.put(new ResourceLocation(key), RegistrySnapshot.read(regs.getCompound(key)));
             }
-            RegistryManager.setCurrentDiskSnapshot(snapshots);
+            failedElements = RegistryManager.applySnapshot(snapshots, true, true);
+        }
+
+        if (!failedElements.isEmpty() && LOGGER.isErrorEnabled(WORLDPERSISTENCE))
+        {
+            StringBuilder buf = new StringBuilder()
+                    .append("There are ").append(failedElements.size()).append(" unassigned registry entries in this save.\n\n");
+
+            failedElements.forEach(k -> buf.append("Missing ").append(k).append('\n'));
+
+            LOGGER.error(WORLDPERSISTENCE, buf.toString());
         }
     }
 

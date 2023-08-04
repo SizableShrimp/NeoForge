@@ -24,7 +24,7 @@
           CompoundTag compoundtag1 = new CompoundTag();
           compoundtag1.m_128365_("Data", compoundtag);
  
-+         net.minecraftforge.common.ForgeHooks.writeAdditionalLevelSaveData(p_78291_, p_78292_, compoundtag1);
++         net.minecraftforge.common.ForgeHooks.writeAdditionalLevelSaveData(p_78292_, compoundtag1);
 +
           try {
              File file2 = File.createTempFile("level", ".dat", file1);
