@@ -524,28 +524,6 @@ public class ForgeMod
         gen.addProvider(event.includeClient(), new VanillaSoundDefinitionsProvider(packOutput, existingFileHelper));
     }
 
-    // public void missingSoundMapping(MissingMappingsEvent event)
-    // {
-    //     if (event.getKey() != Registries.SOUND_EVENT)
-    //         return;
-    //
-    //     //Removed in 1.15, see https://minecraft.gamepedia.com/Parrot#History
-    //     List<String> removedSounds = Arrays.asList("entity.parrot.imitate.panda", "entity.parrot.imitate.zombie_pigman", "entity.parrot.imitate.enderman", "entity.parrot.imitate.polar_bear", "entity.parrot.imitate.wolf");
-    //     for (MissingMappingsEvent.Mapping<SoundEvent> mapping : event.getAllMappings(Registries.SOUND_EVENT))
-    //     {
-    //         ResourceKey<SoundEvent> key = mapping.getKey();
-    //         if (key != null && key.location().getNamespace().equals("minecraft"))
-    //         {
-    //             String path = key.location().getPath();
-    //             if (removedSounds.stream().anyMatch(s -> s.equals(path)))
-    //             {
-    //                 LOGGER.info("Ignoring removed minecraft sound {}", key);
-    //                 mapping.ignore();
-    //             }
-    //         }
-    //     }
-    // }
-
     // done in an event instead of deferred to only enable if a mod requests it
     public void registerFluids(RegisterEvent event)
     {

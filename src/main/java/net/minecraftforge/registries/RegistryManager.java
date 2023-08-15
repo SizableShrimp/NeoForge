@@ -108,9 +108,7 @@ public class RegistryManager {
             LOGGER.warn(REGISTRIES, builder.toString());
         }
 
-        Set<ResourceKey<?>> unhandled = missingEntries.isEmpty()
-                ? Set.of()
-                : RegistryRemapHandler.handleRemaps(missingEntries, isLocalWorld);
+        Set<ResourceKey<?>> unhandled = RegistryRemapHandler.handleRemaps(missingEntries, isLocalWorld);
 
         ObjectHolderRegistry.applyObjectHolders();
 
