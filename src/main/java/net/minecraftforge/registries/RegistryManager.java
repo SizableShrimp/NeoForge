@@ -153,8 +153,7 @@ public class RegistryManager {
     /**
      * Takes a snapshot of the current registries registered to {@link BuiltInRegistries#REGISTRY}.
      *
-     * @param snapshotType If {@link SnapshotType#SAVE_TO_DISK}, only takes a snapshot of registries set to {@linkplain IForgeRegistry#doesSerialize() serialize}.
-     * If {@link SnapshotType#SYNC_TO_CLIENT}, only takes a snapshot of registries set to {@linkplain IForgeRegistry#doesSync() sync to the client}.
+     * @param snapshotType If {@link SnapshotType#SYNC_TO_CLIENT}, only takes a snapshot of registries set to {@linkplain IForgeRegistry#doesSync() sync to the client}.
      * If {@link SnapshotType#FULL}, takes a snapshot of all registries including entries.
      * @return the snapshot map of registry name to snapshot data
      */
@@ -163,10 +162,7 @@ public class RegistryManager {
         boolean full = snapshotType == SnapshotType.FULL;
 
         for (Registry<?> registry : BuiltInRegistries.REGISTRY) {
-            if (snapshotType == SnapshotType.SAVE_TO_DISK) {
-                if (!registry.doesSerialize())
-                    continue;
-            } else if (snapshotType == SnapshotType.SYNC_TO_CLIENT) {
+            if (snapshotType == SnapshotType.SYNC_TO_CLIENT) {
                 if (!registry.doesSync())
                     continue;
             }
@@ -201,10 +197,6 @@ public class RegistryManager {
     }
 
     public enum SnapshotType {
-        /**
-         * The snapshot can be saved to disk.
-         */
-        SAVE_TO_DISK,
         /**
          * The snapshot can be synced to clients.
          */

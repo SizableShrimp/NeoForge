@@ -24,7 +24,6 @@ public class RegistryBuilder<T> {
     @Nullable
     private ResourceLocation defaultKey;
     private int maxId = -1;
-    private boolean serialize = false;
     private boolean sync = false;
 
     public RegistryBuilder(ResourceKey<? extends Registry<T>> registryKey) {
@@ -61,15 +60,6 @@ public class RegistryBuilder<T> {
     }
 
     /**
-     * Sets whether this registry should have its numerical IDs serialized to disk.
-     * Default: {@code false}.
-     */
-    public RegistryBuilder<T> serialize(boolean serialize) {
-        this.serialize = serialize;
-        return this;
-    }
-
-    /**
      * Sets whether this registry should have its numerical IDs synced to clients.
      * Default: {@code false}.
      */
@@ -94,7 +84,6 @@ public class RegistryBuilder<T> {
         this.callbacks.forEach(registry::addCallback);
         if (this.maxId != -1)
             registry.setMaxId(this.maxId);
-        registry.setSerialize(this.serialize);
         registry.setSync(this.sync);
 
         return registry;

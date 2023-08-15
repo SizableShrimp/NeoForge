@@ -15,11 +15,6 @@ import java.util.Optional;
 
 public interface IForgeRegistry<T> {
     /**
-     * {@return whether this registry should be serialized to disk}
-     */
-    boolean doesSerialize();
-
-    /**
      * {@return whether this registry should be synced to clients}
      */
     boolean doesSync();

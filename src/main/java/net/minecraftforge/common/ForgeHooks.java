@@ -175,10 +175,8 @@ import net.minecraftforge.event.level.NoteBlockEvent;
 import net.minecraftforge.fluids.FluidType;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoader;
-import net.minecraftforge.registries.RegistrySnapshot;
 import net.minecraftforge.resource.ResourcePackLoader;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryManager;
 import net.minecraftforge.server.permission.PermissionAPI;
 
 import org.apache.commons.lang3.function.TriFunction;
@@ -1262,15 +1260,6 @@ public class ForgeHooks
         });
         fmlData.put("LoadingModList", modList);
 
-        CompoundTag registries = new CompoundTag();
-        fmlData.put("Registries", registries);
-        LOGGER.debug(WORLDPERSISTENCE, "Gathering id map for writing to world save {}", worldData.getLevelName());
-
-        for (Map.Entry<ResourceLocation, RegistrySnapshot> e : RegistryManager.takeSnapshot(RegistryManager.SnapshotType.SAVE_TO_DISK).entrySet())
-        {
-            registries.put(e.getKey().toString(), e.getValue().write());
-        }
-        LOGGER.debug(WORLDPERSISTENCE, "ID Map collection complete {}", worldData.getLevelName());
         levelTag.put("fml", fmlData);
     }
 
@@ -1356,29 +1345,6 @@ public class ForgeHooks
                 unresolved.append(System.lineSeparator()).append("Things may not work well.");
                 LOGGER.warn(WORLDPERSISTENCE, unresolved.toString());
             }
-        }
-
-        Set<ResourceKey<?>> failedElements = Set.of();
-
-        if (tag.contains("Registries"))
-        {
-            Map<ResourceLocation, RegistrySnapshot> snapshots = new HashMap<>();
-            CompoundTag regs = tag.getCompound("Registries");
-            for (String key : regs.getAllKeys())
-            {
-                snapshots.put(new ResourceLocation(key), RegistrySnapshot.read(regs.getCompound(key)));
-            }
-            failedElements = RegistryManager.applySnapshot(snapshots, true, true);
-        }
-
-        if (!failedElements.isEmpty() && LOGGER.isErrorEnabled(WORLDPERSISTENCE))
-        {
-            StringBuilder buf = new StringBuilder()
-                    .append("There are ").append(failedElements.size()).append(" unassigned registry entries in this save.\n\n");
-
-            failedElements.forEach(k -> buf.append("Missing ").append(k).append('\n'));
-
-            LOGGER.error(WORLDPERSISTENCE, buf.toString());
         }
     }
 

@@ -41,12 +41,6 @@ public class ForgeRegistriesSetup {
     }
 
     /**
-     * The set of vanilla registries which should be serialized to disk.
-     */
-    private static final Set<ResourceKey<? extends Registry<?>>> VANILLA_SERIALIZE_KEYS = Set.of(
-            Registries.MOB_EFFECT // Required for MobEffectInstance serialization
-    );
-    /**
      * The set of vanilla registries which should be synced to the client.
      */
     private static final Set<ResourceKey<? extends Registry<?>>> VANILLA_SYNC_KEYS = Set.of(
@@ -74,9 +68,6 @@ public class ForgeRegistriesSetup {
             return;
 
         ResourceKey<? extends Registry<?>> registryKey = event.getRegistryKey();
-
-        if (VANILLA_SERIALIZE_KEYS.contains(registryKey))
-            forgeRegistry.setSerialize(true);
 
         if (VANILLA_SYNC_KEYS.contains(registryKey))
             forgeRegistry.setSync(true);

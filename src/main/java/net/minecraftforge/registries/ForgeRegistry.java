@@ -26,17 +26,7 @@ public abstract class ForgeRegistry<T> implements Registry<T> {
     protected final List<ClearCallback<T>> clearCallbacks = new ArrayList<>();
     final Map<ResourceLocation, ResourceLocation> aliases = new HashMap<>();
     private int maxId = Integer.MAX_VALUE - 1;
-    private boolean serialize;
     private boolean sync;
-
-    void setSerialize(boolean serialize) {
-        this.serialize = serialize;
-    }
-
-    @Override
-    public boolean doesSerialize() {
-        return this.serialize;
-    }
 
     void setSync(boolean sync) {
         this.sync = sync;
